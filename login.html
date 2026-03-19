@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8a96b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NovaShop">
+<title>تسجيل الدخول — NovaShop</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="db.js"></script>
+<script src="api.js"></script>
+<script src="notifications.js" defer></script>
+<style>
+.auth-page {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; position: relative;
+}
+.auth-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 24px; padding: 44px 40px;
+  width: 100%; max-width: 450px;
+  position: relative; z-index: 1;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  animation: fadeInUp 0.5s ease;
+}
+.auth-logo { text-align: center; margin-bottom: 28px; }
+.auth-logo .logo-icon { font-size: 2rem; color: var(--accent); }
+.auth-logo h1 { font-size: 1.8rem; font-weight: 900; margin-top: 6px; }
+.auth-logo p { color: var(--muted); font-size: 0.88rem; margin-top: 4px; }
+
+.auth-tabs {
+  display: flex; background: var(--bg); border-radius: 12px;
+  padding: 4px; margin-bottom: 28px; gap: 4px;
+}
+.auth-tab {
+  flex: 1; padding: 10px; border: none; background: none;
+  color: var(--muted); border-radius: 8px; cursor: pointer;
+  font-family: 'Tajawal', sans-serif; font-size: 0.95rem; font-weight: 600;
+  transition: all 0.2s;
+}
+.auth-tab.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-form .form-field { display: flex; flex-direction: column; gap: 6px; }
+.auth-form .form-field label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+.auth-form .form-field input {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 12px 14px;
+  border-radius: 10px; font-family: 'Tajawal', sans-serif;
+  font-size: 0.95rem; outline: none; transition: border-color 0.2s; width: 100%;
+  box-sizing: border-box;
+}
+.auth-form .form-field input:focus { border-color: var(--accent); }
+.auth-form .form-field input::placeholder { color: var(--muted); }
+
+.auth-submit {
+  width: 100%; padding: 13px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white; border: none; border-radius: 10px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  font-family: 'Tajawal', sans-serif; margin-top: 6px;
+  transition: opacity 0.2s, transform 0.2s;
+  box-shadow: 0 6px 20px rgba(200,169,107,0.3);
+}
+.auth-submit:hover { opacity: 0.9; transform: translateY(-1px); }
+.auth-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.auth-secondary {
+  width: 100%; padding: 12px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--muted); border-radius: 10px;
+  font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  font-family: 'Tajawal', sans-serif;
+  transition: all 0.2s;
+}
+.auth-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+.auth-alert {
+  padding: 12px 16px; border-radius: 10px;
+  font-size: 0.88rem; display: none; line-height: 1.6;
+}
+.auth-alert.error   { background: rgba(239,68,68,0.1);  border: 1px solid rgba(239,68,68,0.3);  color: #ef4444; }
+.auth-alert.success { background: rgba(34,197,94,0.1);  border: 1px solid rgba(34,197,94,0.3);  color: #22c55e; }
+.auth-alert.info    { background: rgba(200,169,107,0.1); border: 1px solid rgba(200,169,107,0.3); color: var(--accent); }
+.auth-alert.show { display: block; animation: fadeInDown 0.3s ease; }
+
+/* OTP boxes */
+.otp-wrap {
+  display: flex; gap: 10px; justify-content: center; margin: 8px 0;
+}
+.otp-box {
+  width: 48px; height: 56px;
+  background: var(--bg); border: 2px solid var(--border);
+  border-radius: 10px; text-align: center;
+  font-size: 1.4rem; font-weight: 700; color: var(--text);
+  font-family: 'DM Mono', monospace; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  caret-color: var(--accent);
+}
+.otp-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(200,169,107,0.2); }
+.otp-box.filled { border-color: var(--accent); background: rgba(200,169,107,0.08); }
+
+.verify-email-badge {
+  background: rgba(181,112,58,0.1); border: 1px solid rgba(181,112,58,0.3);
+  color: var(--accent3); padding: 10px 14px; border-radius: 10px;
+  font-size: 0.85rem; text-align: center; margin-bottom: 4px;
+  word-break: break-all;
+}
+.resend-link {
+  color: var(--accent); cursor: pointer; font-size: 0.85rem;
+  text-align: center; text-decoration: underline; margin-top: 4px;
+  display: block;
+}
+.resend-link:hover { opacity: 0.8; }
+
+.divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.82rem; margin: 4px 0; }
+.divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.email-preview {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px; margin-top: 12px; display: none;
+}
+.email-preview.show { display: block; animation: fadeInUp 0.3s ease; }
+
+/* Screen panels */
+.auth-screen { display: none; }
+.auth-screen.active { display: block; animation: fadeInUp 0.3s ease; }
+
+/* ===== FORGOT PASSWORD STEPS ===== */
+.steps-bar {
+  display: flex; align-items: flex-start; justify-content: center;
+  gap: 0; margin-bottom: 28px;
+}
+.step-col { display: flex; flex-direction: column; align-items: center; }
+.step-dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.78rem; font-weight: 800;
+  background: var(--bg); border: 2px solid var(--border); color: var(--muted);
+  transition: all 0.3s; flex-shrink: 0;
+}
+.step-dot.active { background: var(--accent); border-color: var(--accent); color: white; box-shadow: 0 0 0 4px rgba(200,169,107,0.2); }
+.step-dot.done   { background: #22c55e; border-color: #22c55e; color: white; }
+.step-label { font-size: 0.68rem; color: var(--muted); margin-top: 5px; white-space: nowrap; }
+.step-line { width: 48px; height: 2px; background: var(--border); margin-top: 15px; transition: background 0.3s; }
+.step-line.done { background: #22c55e; }
+
+/* password strength */
+.pass-strength-bar {
+  height: 4px; border-radius: 2px; margin-top: 7px;
+  background: var(--border); transition: all 0.3s;
+}
+.pass-strength-bar.weak   { background: #ef4444; width: 33%; }
+.pass-strength-bar.medium { background: #f59e0b; width: 66%; }
+.pass-strength-bar.strong { background: #22c55e; width: 100%; }
+.pass-strength-txt { font-size: 0.74rem; margin-top: 4px; transition: color 0.3s; }
+
+.back-link {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--muted); cursor: pointer; font-size: 0.85rem;
+  margin-bottom: 20px; width: fit-content;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--accent); }
+
+.forgot-link {
+  text-align: left; font-size: 0.82rem;
+  color: var(--accent); cursor: pointer;
+  text-decoration: underline; margin-top: -6px;
+  transition: opacity 0.2s;
+}
+.forgot-link:hover { opacity: 0.75; }
+</style>
+</head>
+<body>
+<div class="cursor-glow" id="cursorGlow"></div>
+<div style="position:fixed;inset:0;z-index:0;overflow:hidden">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">◈</div>
+      <h1>Nova<span style="color:var(--accent)">Shop</span></h1>
+      <p id="authSubtitle">مرحباً بك في متجر المستقبل</p>
+    </div>
+
+    <!-- ===== SCREEN 1: Login / Register ===== -->
+    <div class="auth-screen active" id="screenMain">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">تسجيل الدخول</button>
+        <button class="auth-tab" id="tabReg" onclick="switchTab('register')">حساب جديد</button>
+      </div>
+
+      <!-- Login -->
+      <div id="loginPanel">
+        <div class="auth-form">
+          <div id="loginAlert" class="auth-alert error"></div>
+          <div class="form-field">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="loginEmail" placeholder="example@email.com" autocomplete="email">
+          </div>
+          <div class="form-field">
+            <label>كلمة المرور</label>
+            <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+            <span class="forgot-link" onclick="goToForgot()">نسيت كلمة المرور؟</span>
+          </div>
+          <button class="auth-submit" id="loginBtn" onclick="doLogin()">دخول ←</button>
+          <div class="divider">أو</div>
+          <button class="auth-secondary" onclick="guestLogin()">متابعة كزائر 👤</button>
+        </div>
+      </div>
+
+      <!-- Register -->
+      <div id="registerPanel" style="display:none">
+        <div class="auth-form">
+          <div id="regAlert" class="auth-alert error"></div>
+          <div class="form-field">
+            <label>الاسم الكامل</label>
+            <input type="text" id="regName" placeholder="محمد أحمد" autocomplete="name">
+          </div>
+          <div class="form-field">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="regEmail" placeholder="example@email.com" autocomplete="email">
+          </div>
+          <div class="form-field">
+            <label>كلمة المرور (6 أحرف على الأقل)</label>
+            <input type="password" id="regPass" placeholder="••••••••">
+          </div>
+          <div class="form-field">
+            <label>تأكيد كلمة المرور</label>
+            <input type="password" id="regPass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()">
+          </div>
+          <button class="auth-submit" id="regBtn" onclick="doRegister()">إنشاء الحساب ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN 2: Email Verification ===== -->
+    <div class="auth-screen" id="screenVerify">
+      <div class="auth-form">
+        <div id="verifyAlert" class="auth-alert info show">
+          📧 تم إرسال كود التحقق إلى بريدك الإلكتروني
+        </div>
+        <div class="verify-email-badge" id="verifyEmailBadge">loading...</div>
+        <div style="text-align:center; margin: 8px 0; font-size:0.85rem; color:var(--muted)">أدخل الكود المكوّن من 6 أرقام</div>
+        <div class="otp-wrap" id="otpBoxes">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        </div>
+        <div id="otpAlert" class="auth-alert error"></div>
+        <button class="auth-submit" id="verifyBtn" onclick="doVerify()">تأكيد البريد ✓</button>
+        <span class="resend-link" onclick="resendCode()">لم تستلم الكود؟ إعادة الإرسال</span>
+      </div>
+    </div>
+
+    <!-- ===== SCREEN 3: Forgot Password (3 steps) ===== -->
+    <div class="auth-screen" id="screenForgot">
+
+      <!-- شريط الخطوات -->
+      <div class="steps-bar">
+        <div class="step-col">
+          <div class="step-dot active" id="fpStep1Dot">1</div>
+          <div class="step-label">البريد</div>
+        </div>
+        <div class="step-line" id="fpLine1"></div>
+        <div class="step-col">
+          <div class="step-dot" id="fpStep2Dot">2</div>
+          <div class="step-label">التحقق</div>
+        </div>
+        <div class="step-line" id="fpLine2"></div>
+        <div class="step-col">
+          <div class="step-dot" id="fpStep3Dot">3</div>
+          <div class="step-label">كلمة جديدة</div>
+        </div>
+      </div>
+
+      <!-- الخطوة 1: إدخال البريد -->
+      <div id="fpPanel1">
+        <div class="auth-form">
+          <div id="fp1Alert" class="auth-alert error"></div>
+          <p style="color:var(--muted);font-size:0.9rem;margin:0 0 4px;line-height:1.7">
+            أدخل بريدك الإلكتروني وسنرسل لك رمز التحقق لإعادة تعيين كلمة المرور.
+          </p>
+          <div class="form-field">
+            <label>البريد الإلكتروني</label>
+            <input type="email" id="fpEmail" placeholder="example@email.com"
+                   onkeydown="if(event.key==='Enter')fpSendCode()">
+          </div>
+          <button class="auth-submit" id="fpSendBtn" onclick="fpSendCode()">
+            إرسال رمز التحقق 📧
+          </button>
+          <span class="back-link" onclick="showScreen('screenMain')">← العودة لتسجيل الدخول</span>
+        </div>
+      </div>
+
+      <!-- الخطوة 2: إدخال الرمز -->
+      <div id="fpPanel2" style="display:none">
+        <div class="auth-form">
+          <div class="verify-email-badge" id="fpEmailBadge">...</div>
+          <div style="text-align:center;font-size:0.85rem;color:var(--muted);margin:4px 0">
+            أدخل الرمز المكوّن من 6 أرقام المُرسل لبريدك
+          </div>
+          <div class="otp-wrap" id="fpOtpBoxes">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          </div>
+          <div id="fp2Alert" class="auth-alert error"></div>
+          <button class="auth-submit" id="fpVerifyBtn" onclick="fpVerifyCode()">
+            تأكيد الرمز ✓
+          </button>
+          <span class="resend-link" onclick="fpResendCode()">لم تستلم الرمز؟ إعادة الإرسال</span>
+          <span class="back-link" onclick="fpGoBack(1)">← تغيير البريد</span>
+        </div>
+      </div>
+
+      <!-- الخطوة 3: كلمة مرور جديدة -->
+      <div id="fpPanel3" style="display:none">
+        <div class="auth-form">
+          <div id="fp3Alert" class="auth-alert success show">
+            ✅ تم التحقق من هويتك! أدخل كلمة مرورك الجديدة
+          </div>
+          <div class="form-field">
+            <label>كلمة المرور الجديدة</label>
+            <input type="password" id="fpNewPass" placeholder="6 أحرف على الأقل"
+                   oninput="checkPassStrength(this.value)">
+            <div class="pass-strength-bar" id="passStrengthBar"></div>
+            <div class="pass-strength-txt" id="passStrengthTxt"></div>
+          </div>
+          <div class="form-field">
+            <label>تأكيد كلمة المرور الجديدة</label>
+            <input type="password" id="fpNewPass2" placeholder="أعد الكتابة"
+                   onkeydown="if(event.key==='Enter')fpResetPassword()">
+          </div>
+          <button class="auth-submit" id="fpResetBtn" onclick="fpResetPassword()">
+            💾 حفظ كلمة المرور الجديدة
+          </button>
+        </div>
+      </div>
+
+    </div><!-- end screenForgot -->
+
+    <!-- ===== SCREEN: 2FA ===== -->
+    <div class="auth-screen" id="screen2FA">
+      <div class="auth-header">
+        <div class="auth-logo">🔐</div>
+        <h1 class="auth-title">التحقق بخطوتين</h1>
+        <p class="auth-sub">أدخل كود التحقق المُرسَل على بريدك</p>
+      </div>
+      <div class="verify-email-badge" id="tfaEmailBadge" style="margin-bottom:16px"></div>
+      <div id="tfa2DevBox" style="display:none;background:rgba(200,169,107,0.08);border:1px solid rgba(200,169,107,0.2);border-radius:10px;padding:12px;text-align:center;margin-bottom:16px;font-size:0.82rem;color:var(--muted)">
+        ⚠️ فشل إرسال الإيميل — الكود المؤقت: <strong id="tfa2DevCode" style="color:var(--accent);font-family:monospace;font-size:1.1rem;letter-spacing:4px;display:block;margin-top:6px"></strong>
+      </div>
+      <div id="tfaAlert" class="auth-alert error"></div>
+      <div class="otp-wrap" id="tfaOtpBoxes">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+      </div>
+      <button class="auth-submit" id="tfaVerifyBtn" onclick="verify2FA()">تحقق من الكود ✓</button>
+      <div style="text-align:center;margin-top:14px;display:flex;justify-content:center;gap:20px">
+        <span style="color:var(--accent);cursor:pointer;font-size:0.85rem;text-decoration:underline"
+              onclick="resend2FACode()">إعادة إرسال الكود</span>
+        <span style="color:var(--muted);cursor:pointer;font-size:0.85rem"
+              onclick="showScreen('screenMain');switchTab('login')">← رجوع</span>
+      </div>
+    </div><!-- end screen2FA -->
+
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  g.style.left = e.clientX + "px";
+  g.style.top = e.clientY + "px";
+});
+
+let pendingEmail       = "";
+let pendingAfterVerify = "index.html";
+let fpEmail            = "";   // بريد نسيت كلمة المرور
+let fpResetToken       = "";   // رمز التحقق بعد التأكيد
+
+// ============================================================
+// INIT
+// ============================================================
+window.addEventListener("DOMContentLoaded", () => {
+  const existingSession = API.getSession();
+  if (existingSession) {
+    window.location.href = existingSession.role === "admin" ? "admin.html" : "index.html";
+  }
+  const params = new URLSearchParams(location.search);
+  if (params.get("verify") && params.get("email")) {
+    pendingEmail = decodeURIComponent(params.get("email"));
+    pendingAfterVerify = params.get("redirect") || "index.html";
+    showScreen("screenVerify");
+    document.getElementById("verifyEmailBadge").textContent = pendingEmail;
+  }
+  setupOtpBoxes("otpBoxes",   () => document.getElementById("verifyBtn").click());
+  setupOtpBoxes("fpOtpBoxes", () => document.getElementById("fpVerifyBtn").click());
+});
+
+// ============================================================
+// OTP HELPER
+// ============================================================
+function setupOtpBoxes(containerId, onComplete) {
+  const boxes = document.querySelectorAll("#" + containerId + " .otp-box");
+  boxes.forEach((box, i) => {
+    box.addEventListener("input", () => {
+      box.value = box.value.replace(/\D/g, "").slice(-1);
+      box.classList.toggle("filled", box.value !== "");
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+      const val = [...boxes].map(b => b.value).join("");
+      if (val.length === 6 && onComplete) onComplete();
+    });
+    box.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !box.value && i > 0) boxes[i - 1].focus();
+    });
+    box.addEventListener("paste", e => {
+      e.preventDefault();
+      const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+      [...text].forEach((ch, j) => {
+        if (boxes[j]) { boxes[j].value = ch; boxes[j].classList.add("filled"); }
+      });
+      boxes[Math.min(text.length, 5)].focus();
+    });
+  });
+}
+
+function getOtpValue(containerId) {
+  return [...document.querySelectorAll("#" + containerId + " .otp-box")]
+    .map(b => b.value).join("");
+}
+
+function clearOtp(containerId) {
+  document.querySelectorAll("#" + containerId + " .otp-box")
+    .forEach(b => { b.value = ""; b.classList.remove("filled"); });
+  document.querySelector("#" + containerId + " .otp-box")?.focus();
+}
+
+// ============================================================
+// SCREENS & TABS
+// ============================================================
+function showScreen(id) {
+  // إذا رجع للشاشة الرئيسية — أعد السماح بالدخول
+  if (id === "screenMain") {
+    _loginInProgress = false;
+    setLoading("loginBtn", false);
+  }
+  document.querySelectorAll(".auth-screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  const subtitles = {
+    screenMain:   "مرحباً بك في متجر المستقبل",
+    screenVerify: "تأكيد البريد الإلكتروني",
+    screenForgot: "إعادة تعيين كلمة المرور",
+    screen2FA:    "التحقق بخطوتين",
+  };
+  document.getElementById("authSubtitle").textContent = subtitles[id] || "";
+}
+
+function switchTab(tab) {
+  document.getElementById("tabLogin").classList.toggle("active", tab === "login");
+  document.getElementById("tabReg").classList.toggle("active", tab === "register");
+  document.getElementById("loginPanel").style.display    = tab === "login"    ? "block" : "none";
+  document.getElementById("registerPanel").style.display = tab === "register" ? "block" : "none";
+  document.getElementById("authSubtitle").textContent =
+    tab === "login" ? "مرحباً بك في متجر المستقبل" : "أنشئ حسابك الآن مجاناً";
+}
+
+function goToForgot() {
+  showScreen("screenForgot");
+  // حاول تعبئة البريد من حقل تسجيل الدخول
+  const loginEmail = document.getElementById("loginEmail").value.trim();
+  if (loginEmail) document.getElementById("fpEmail").value = loginEmail;
+  fpSetStep(1);
+}
+
+// ============================================================
+// LOGIN
+// ============================================================
+// حفظ بيانات مؤقتة لخطوة 2FA
+let _2fa_userId    = null;
+let _2fa_email     = null;
+let _loginInProgress = false; // يمنع إرسال طلبات متعددة
+
+async function doLogin() {
+  if (_loginInProgress) return; // منع الطلبات المتكررة
+  const email   = document.getElementById("loginEmail").value.trim();
+  const pass    = document.getElementById("loginPass").value;
+  const alertEl = document.getElementById("loginAlert");
+  if (!email || !pass) { showAlert(alertEl, "error", "يرجى تعبئة جميع الحقول"); return; }
+
+  _loginInProgress = true;
+  setLoading("loginBtn", true);
+
+  // استخدم endpoint جديد يدعم 2FA
+  let res;
+  try {
+    const r = await fetch("/api/auth/2fa/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: pass }),
+      signal: AbortSignal.timeout(6000)
+    });
+    res = await r.json();
+  } catch {
+    // Fallback: استخدم API العادي (offline أو سيرفر بدون 2FA)
+    res = await API.login(email, pass);
+    res.twoFA = false;
+  }
+  // أعد تفعيل الزر فقط عند الخطأ — ليس عند الانتقال لـ 2FA
+  if (!res.ok || !res.twoFA) {
+    setLoading("loginBtn", false);
+  }
+
+  if (!res.ok) {
+    _loginInProgress = false; // أعد السماح عند الخطأ
+    if (res.banned) {
+      alertEl.className = "auth-alert banned show";
+      alertEl.innerHTML = `<span class="banned-icon">⛔</span><strong>الحساب مقيّد</strong> تم تقييد هذا الحساب من قِبل الإدارة.`;
+      return;
+    }
+    // needVerify removed — accounts are verified instantly
+    alertEl.className = "auth-alert error show";
+    alertEl.textContent = "⚠️ " + res.msg;
+    return;
+  }
+
+  // ── 2FA مطلوب ────────────────────────────────────────────────────
+  if (res.twoFA) {
+    _2fa_userId = res.userId;
+    _2fa_email  = email;
+    show2FAScreen(res._devCode, res.emailError);
+    // _loginInProgress يبقى true — لا إرسال جديد حتى ينتهي المستخدم من 2FA
+    return;
+  }
+
+  // ── تسجيل دخول مباشر (بدون 2FA) ─────────────────────────────────
+  finalizeLogin(res);
+}
+
+function show2FAScreen(devCode, emailError) {
+  // تحديث البيانات في الشاشة الثابتة
+  const badge = document.getElementById("tfaEmailBadge");
+  if (badge) badge.textContent = _2fa_email || "";
+
+  // عرض/إخفاء كود التطوير أو خطأ الإيميل
+  const devBox   = document.getElementById("tfa2DevBox");
+  const devCodeEl = document.getElementById("tfa2DevCode");
+  if (devBox && devCodeEl) {
+    if (devCode) {
+      devBox.style.display = "block";
+      devCodeEl.textContent = devCode;
+      // تلوين مختلف إذا كان خطأ إيميل
+      if (emailError) {
+        devBox.style.background = "rgba(239,68,68,0.08)";
+        devBox.style.borderColor = "rgba(239,68,68,0.3)";
+        devBox.querySelector("strong").style.color = "#ef4444";
+      }
+    } else {
+      devBox.style.display = "none";
+    }
+  }
+
+  // إعادة تهيئة خانات OTP
+  const boxes = document.querySelectorAll("#tfaOtpBoxes .otp-box");
+  boxes.forEach(b => { b.value = ""; b.classList.remove("filled"); });
+  const alertEl = document.getElementById("tfaAlert");
+  if (alertEl) alertEl.className = "auth-alert error";
+
+  setupOtpBoxes("tfaOtpBoxes");
+  showScreen("screen2FA");
+
+  // Focus أول خانة
+  setTimeout(() => boxes[0]?.focus(), 200);
+}
+
+let _tfaInProgress = false;
+async function verify2FA() {
+  if (_tfaInProgress) return;
+  const code = [...document.querySelectorAll("#tfaOtpBoxes .otp-box")].map(b => b.value).join("");
+  const alertEl = document.getElementById("tfaAlert");
+  if (code.length < 6) { showAlert(alertEl, "error", "أدخل الكود كاملاً (6 أرقام)"); return; }
+
+  _tfaInProgress = true;
+  setLoading("tfaVerifyBtn", true);
+  try {
+    const r = await fetch("/api/auth/2fa/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: _2fa_userId, code }),
+      signal: AbortSignal.timeout(6000)
+    });
+    const res = await r.json();
+    setLoading("tfaVerifyBtn", false);
+    if (!res.ok) { showAlert(alertEl, "error", res.msg); return; }
+    finalizeLogin(res);
+  } catch {
+    setLoading("tfaVerifyBtn", false);
+    showAlert(alertEl, "error", "⚠️ تعذّر التحقق، حاول مجدداً");
+  }
+}
+
+async function resend2FACode() {
+  if (!_2fa_email) return;
+  showToast("📧 جاري إعادة الإرسال...");
+  try {
+    // أعد إرسال بنفس الطريقة — لكن نحتاج كلمة المرور
+    // الحل: احتفظ بها مؤقتاً أو أعد توجيه للشاشة الأولى
+    showScreen("screenMain");
+    showToast("أعد إدخال كلمة المرور لإرسال كود جديد");
+  } catch {}
+}
+
+function finalizeLogin(res) {
+  _loginInProgress = false; // أعد الحالة للسماح بدخول جديد لاحقاً
+  if (res.token) API.setToken(res.token);
+  if (res.user)  API.setSession(res.user);
+  showToast("✅ أهلاً " + res.user.name + "!");
+  if (res.user.role === "admin") {
+    setTimeout(() => window.location.href = "admin.html", 700);
+    return;
+  }
+  const redirect = new URLSearchParams(location.search).get("redirect") || "index.html";
+  setTimeout(() => window.location.href = redirect, 700);
+}
+
+function setupOtpBoxes(containerId) {
+  const boxes = document.querySelectorAll("#" + containerId + " .otp-box");
+  boxes.forEach((box, i) => {
+    box.addEventListener("input", () => {
+      box.classList.toggle("filled", box.value !== "");
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+      if ([...boxes].every(b => b.value)) {
+        const verifyBtnId = containerId === "tfaOtpBoxes" ? "tfaVerifyBtn" : "verifyBtn";
+        document.getElementById(verifyBtnId)?.click();
+      }
+    });
+    box.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !box.value && i > 0) boxes[i - 1].focus();
+    });
+    box.addEventListener("paste", e => {
+      e.preventDefault();
+      const text = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"").slice(0,6);
+      boxes.forEach((b, j) => { if (text[j]) { b.value = text[j]; b.classList.add("filled"); } });
+      if (text.length >= 6) document.getElementById("tfaVerifyBtn")?.click();
+    });
+  });
+}
+
+// ============================================================
+// REGISTER
+// ============================================================
+async function doRegister() {
+  const name  = document.getElementById("regName").value.trim();
+  const email = document.getElementById("regEmail").value.trim();
+  const pass  = document.getElementById("regPass").value;
+  const pass2 = document.getElementById("regPass2").value;
+  const alertEl = document.getElementById("regAlert");
+
+  if (!name || !email || !pass) { showAlert(alertEl, "error", "يرجى تعبئة جميع الحقول"); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert(alertEl, "error", "صيغة البريد غير صحيحة"); return; }
+  if (pass.length < 6) { showAlert(alertEl, "error", "كلمة المرور يجب 6 أحرف على الأقل"); return; }
+  if (pass !== pass2)  { showAlert(alertEl, "error", "كلمتا المرور غير متطابقتين"); return; }
+
+  setLoading("regBtn", true);
+  const res = await API.register(name, email, pass);
+  setLoading("regBtn", false);
+
+  if (!res.ok) { showAlert(alertEl, "error", res.msg); return; }
+
+  // التسجيل فوري — لا يحتاج تأكيد بريد
+  showToast("✅ تم إنشاء الحساب! جاري تسجيل الدخول...");
+  // حفظ الجلسة وتوجيه
+  if (res.token) API.setToken(res.token);
+  if (res.user)  API.setSession(res.user);
+  const redirect = new URLSearchParams(location.search).get("redirect") || "index.html";
+  setTimeout(() => window.location.href = redirect, 800);
+}
+
+// ============================================================
+// VERIFY EMAIL (تسجيل)
+// ============================================================
+async function doVerify() {
+  const code  = getOtpValue("otpBoxes");
+  const alertEl = document.getElementById("otpAlert");
+  if (code.length < 6) { showAlert(alertEl, "error", "أدخل الكود كاملاً (6 أرقام)"); return; }
+
+  setLoading("verifyBtn", true);
+  const res = await API.verifyEmail(pendingEmail, code);
+  setLoading("verifyBtn", false);
+
+  if (!res.ok) { showAlert(alertEl, "error", res.msg); clearOtp("otpBoxes"); return; }
+
+  API.setToken(res.token);
+  API.setSession(res.user);
+  showToast("🎉 تم تأكيد بريدك بنجاح!");
+  setTimeout(() => window.location.href = pendingAfterVerify, 800);
+}
+
+async function resendCode() {
+  if (!pendingEmail) { showToast("⚠️ أدخل بريدك أولاً"); return; }
+  const res = await API.resendCode(pendingEmail);
+  if (!res.ok) { showToast("⚠️ " + res.msg); return; }
+  // عرض الكود على الشاشة دائماً
+  const newCode = res._devCode || (DB.getUsers().find(u => u.email?.toLowerCase() === pendingEmail?.toLowerCase())?.verifyCode);
+  if (newCode) {
+    showAlert(document.getElementById("verifyAlert"), "info",
+      `🔑 الكود الجديد: <strong style="font-size:1.5rem;font-family:monospace;letter-spacing:6px;color:#c8a96b">${newCode}</strong>`);
+  } else {
+    showToast("✅ تم إعادة إرسال الكود!");
+  }
+  clearOtp("otpBoxes");
+}
+
+// ============================================================
+// FORGOT PASSWORD — الخطوة 1: إرسال الرمز
+// ============================================================
+async function fpSendCode() {
+  const email = document.getElementById("fpEmail").value.trim();
+  const alertEl = document.getElementById("fp1Alert");
+
+  if (!email) { showAlert(alertEl, "error", "يرجى إدخال بريدك الإلكتروني"); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert(alertEl, "error", "صيغة البريد غير صحيحة"); return; }
+
+  setLoading("fpSendBtn", true);
+
+  // حاول API أولاً، إن فشل استخدم DB المحلي
+  let res;
+  try {
+    res = await API.forgotPassword(email);
+  } catch {
+    res = DB.forgotPasswordSend(email);
+  }
+
+  setLoading("fpSendBtn", false);
+
+  if (!res.ok) { showAlert(alertEl, "error", res.msg); return; }
+
+  fpEmail = email;
+
+  // عرض الرمز على الشاشة دائماً
+  const fpCode = res._devCode || (DB.getUsers().find(u => u.email?.toLowerCase() === fpEmail?.toLowerCase())?.resetCode);
+  if (fpCode) {
+    showAlert(document.getElementById("fp2Alert"), "info",
+      `🔑 رمز التحقق: <strong style="font-size:1.5rem;font-family:monospace;letter-spacing:6px;color:#c8a96b">${fpCode}</strong>`);
+  } else {
+    showAlert(document.getElementById("fp2Alert"), "info", "📧 تم إرسال الرمز لبريدك!");
+  }
+
+  document.getElementById("fpEmailBadge").textContent = fpEmail;
+  fpSetStep(2);
+}
+
+// ============================================================
+// FORGOT PASSWORD — الخطوة 2: التحقق من الرمز
+// ============================================================
+async function fpVerifyCode() {
+  const code    = getOtpValue("fpOtpBoxes");
+  const alertEl = document.getElementById("fp2Alert");
+  if (code.length < 6) { showAlert(alertEl, "error", "أدخل الرمز كاملاً (6 أرقام)"); return; }
+
+  setLoading("fpVerifyBtn", true);
+
+  let res;
+  try {
+    res = await API.verifyResetCode(fpEmail, code);
+  } catch {
+    res = DB.forgotPasswordVerify(fpEmail, code);
+  }
+
+  setLoading("fpVerifyBtn", false);
+
+  if (!res.ok) { showAlert(alertEl, "error", res.msg); clearOtp("fpOtpBoxes"); return; }
+
+  fpResetToken = res.resetToken || code; // توكن مؤقت
+  fpSetStep(3);
+}
+
+async function fpResendCode() {
+  if (!fpEmail) return;
+  let res;
+  try {
+    res = await API.forgotPassword(fpEmail);
+  } catch {
+    res = DB.forgotPasswordSend(fpEmail);
+  }
+  if (!res.ok) { showToast("⚠️ " + res.msg); return; }
+  // عرض الرمز الجديد على الشاشة
+  const fpNewCode = res._devCode || (DB.getUsers().find(u => u.email?.toLowerCase() === fpEmail?.toLowerCase())?.resetCode);
+  if (fpNewCode) {
+    showAlert(document.getElementById("fp2Alert"), "info",
+      `🔑 الرمز الجديد: <strong style="font-size:1.5rem;font-family:monospace;letter-spacing:6px;color:#c8a96b">${fpNewCode}</strong>`);
+  } else {
+    showToast("✅ تم إعادة إرسال الرمز!");
+  }
+  clearOtp("fpOtpBoxes");
+}
+
+// ============================================================
+// FORGOT PASSWORD — الخطوة 3: تعيين كلمة مرور جديدة
+// ============================================================
+async function fpResetPassword() {
+  const newPass  = document.getElementById("fpNewPass").value;
+  const newPass2 = document.getElementById("fpNewPass2").value;
+  const alertEl  = document.getElementById("fp3Alert");
+
+  if (!newPass || newPass.length < 6) {
+    showAlert(alertEl, "error", "كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+    return;
+  }
+  if (newPass !== newPass2) {
+    showAlert(alertEl, "error", "كلمتا المرور غير متطابقتين");
+    return;
+  }
+
+  setLoading("fpResetBtn", true);
+
+  let res;
+  try {
+    res = await API.resetPassword(fpEmail, fpResetToken, newPass);
+  } catch {
+    res = DB.forgotPasswordReset(fpEmail, fpResetToken, newPass);
+  }
+
+  setLoading("fpResetBtn", false);
+
+  if (!res.ok) { showAlert(alertEl, "error", res.msg); return; }
+
+  showAlert(alertEl, "success", "✅ تم تغيير كلمة المرور بنجاح! سيتم توجيهك لتسجيل الدخول...");
+  showToast("🔐 تم تغيير كلمة المرور!");
+
+  // تسجيل الدخول تلقائياً إن أعاد السيرفر توكن
+  if (res.token && res.user) {
+    API.setToken(res.token);
+    API.setSession(res.user);
+    setTimeout(() => window.location.href = "index.html", 1200);
+  } else {
+    setTimeout(() => {
+      showScreen("screenMain");
+      switchTab("login");
+      document.getElementById("loginEmail").value = fpEmail;
+      fpEmail = ""; fpResetToken = "";
+    }, 1500);
+  }
+}
+
+// ============================================================
+// FORGOT PASSWORD — خطوات UI
+// ============================================================
+function fpSetStep(step) {
+  // إظهار الباند الصحيح
+  document.getElementById("fpPanel1").style.display = step === 1 ? "block" : "none";
+  document.getElementById("fpPanel2").style.display = step === 2 ? "block" : "none";
+  document.getElementById("fpPanel3").style.display = step === 3 ? "block" : "none";
+
+  // تحديث الدوائر
+  ["1","2","3"].forEach(n => {
+    const dot = document.getElementById("fpStep" + n + "Dot");
+    const num = parseInt(n);
+    dot.className = "step-dot " + (num < step ? "done" : num === step ? "active" : "");
+    dot.textContent = num < step ? "✓" : n;
+  });
+
+  // تحديث الخطوط
+  document.getElementById("fpLine1").className = "step-line " + (step > 1 ? "done" : "");
+  document.getElementById("fpLine2").className = "step-line " + (step > 2 ? "done" : "");
+
+  if (step === 2) {
+    setTimeout(() => {
+      document.querySelector("#fpOtpBoxes .otp-box")?.focus();
+    }, 100);
+  }
+  if (step === 3) {
+    setTimeout(() => document.getElementById("fpNewPass")?.focus(), 100);
+  }
+}
+
+function fpGoBack(toStep) {
+  fpSetStep(toStep);
+  clearOtp("fpOtpBoxes");
+}
+
+// ============================================================
+// PASSWORD STRENGTH
+// ============================================================
+function checkPassStrength(val) {
+  const bar = document.getElementById("passStrengthBar");
+  const txt = document.getElementById("passStrengthTxt");
+  if (!val) { bar.className = "pass-strength-bar"; txt.textContent = ""; return; }
+  const hasUpper = /[A-Z]/.test(val);
+  const hasNum   = /[0-9]/.test(val);
+  const hasSpec  = /[^A-Za-z0-9]/.test(val);
+  const score    = (val.length >= 8 ? 1 : 0) + (hasUpper ? 1 : 0) + (hasNum ? 1 : 0) + (hasSpec ? 1 : 0);
+
+  if (score <= 1)      { bar.className = "pass-strength-bar weak";   txt.textContent = "ضعيفة";     txt.style.color = "#ef4444"; }
+  else if (score <= 2) { bar.className = "pass-strength-bar medium"; txt.textContent = "متوسطة";    txt.style.color = "#f59e0b"; }
+  else                 { bar.className = "pass-strength-bar strong"; txt.textContent = "قوية ✓";   txt.style.color = "#22c55e"; }
+}
+
+// ============================================================
+// GUEST
+// ============================================================
+function guestLogin() {
+  API.setSession({ id: 0, name: "زائر", email: "", role: "guest" });
+  window.location.href = new URLSearchParams(location.search).get("redirect") || "index.html";
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  btn.disabled = loading;
+  const labels = {
+    loginBtn:   "دخول ←",
+    regBtn:     "إنشاء الحساب ✓",
+    verifyBtn:  "تأكيد البريد ✓",
+    fpSendBtn:  "إرسال رمز التحقق 📧",
+    fpVerifyBtn:"تأكيد الرمز ✓",
+    fpResetBtn: "💾 حفظ كلمة المرور الجديدة",
+  };
+  btn.textContent = loading ? "⏳ جاري المعالجة..." : (labels[btnId] || "إرسال");
+}
+
+function showAlert(el, type, msg) {
+  el.className = "auth-alert " + type + " show";
+  el.textContent = (type === "error" ? "⚠️ " : type === "success" ? "✅ " : "ℹ️ ") + msg;
+  if (type !== "success") setTimeout(() => el.classList.remove("show"), 6000);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>

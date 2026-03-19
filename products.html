@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8a96b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NovaShop">
+<title>المنتجات — NovaShop</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">◈</span>
+      <span>Nova<strong>Shop</strong></span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="products.html" class="active">المنتجات</a>
+      <a href="cart.html" class="cart-link">
+        السلة
+        <span class="cart-badge" id="cartCount">0</span>
+      </a>
+      <span id="userNavItem"></span>
+      <span id="adminNavItem"></span>
+    </nav>
+    <button class="notif-btn notif-btn-mobile" onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifToggleMobile" style="display:none;position:relative;background:rgba(200,169,107,0.08);border:1px solid rgba(200,169,107,0.2);border-radius:10px;padding:7px 10px;cursor:pointer;align-items:center;gap:4px;color:#94a3b8;font-size:1rem;">🔔<span class="notif-badge" style="display:none">0</span></button><button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">الرئيسية</a>
+    <a href="products.html">المنتجات</a>
+      <a href="chat.html">💬 الدعم</a>
+    <a href="cart.html">السلة</a>
+    <span id="adminMobileItem"></span>
+  
+    <button onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifMobileMenuBtn" style="display:none;background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:1rem;padding:14px 28px;text-align:right;width:100%;cursor:pointer;border-bottom:1px solid var(--border);">🔔 الإشعارات <span id="notifMobileCount" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-right:4px;display:none">0</span></button></div>
+</header>
+<script src="db.js"></script>
+<script src="store.js" defer></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const session = DB.getSession();
+  const userEl  = document.getElementById("userNavItem");
+  const adminEl = document.getElementById("adminNavItem");
+  const adminMobile = document.getElementById("adminMobileItem");
+  if (session) {
+    userEl.innerHTML = `<a href="profile.html" style="color:var(--accent);font-weight:700;padding:8px 16px;border-radius:8px;text-decoration:none">👤 ${session.name}</a>`;
+    if (session.role === "admin") {
+      adminEl.innerHTML = `<a href="admin.html" class="nav-admin">⚙ الإدارة</a>`;
+      adminMobile.innerHTML = `<a href="admin.html">الإدارة</a>`;
+    }
+  } else {
+    userEl.innerHTML = `<a href="login.html" style="color:var(--muted);padding:8px 16px;border-radius:8px;text-decoration:none">تسجيل الدخول</a>`;
+  }
+});
+</script>
+
+<div class="page-hero">
+  <h1>🛍️ جميع المنتجات</h1>
+  <p>اكتشف مجموعتنا المختارة من أفضل المنتجات بأفضل الأسعار</p>
+</div>
+
+<div class="search-bar-wrap">
+  <input type="text" class="search-bar" id="searchInput" placeholder="🔍 ابحث عن منتج..." oninput="filterProducts()">
+</div>
+
+<div class="filters-bar" style="flex-direction:column;gap:12px;align-items:stretch">
+  <!-- Source Toggle -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:4px;gap:4px">
+      <button id="srcLocal" class="filter-tab active" onclick="setSource('local',this)"
+        style="padding:8px 18px;border-radius:8px;font-size:0.85rem">
+        🏪 منتجاتي
+      </button>
+      <button id="srcEbay" class="filter-tab" onclick="setSource('ebay',this)"
+        style="padding:8px 18px;border-radius:8px;font-size:0.85rem">
+        🌍 eBay
+      </button>
+    </div>
+
+    <!-- eBay Search (hidden by default) -->
+    <div id="ebaySearchWrap" style="display:none;flex:1;gap:8px;align-items:center">
+      <input id="ebaySearchInput" placeholder="🔍 ابحث على eBay..." 
+        class="search-bar" style="flex:1;max-width:340px;margin:0"
+        onkeydown="if(event.key==='Enter') searchEbay()">
+      <select id="ebayCatSelect" class="sort-select" onchange="searchEbay()">
+        <option value="">كل الفئات</option>
+      </select>
+      <select id="ebaySortSelect" class="sort-select" onchange="searchEbay()">
+        <option value="">الأكثر صلة</option>
+        <option value="PRICE">السعر: الأقل</option>
+        <option value="-PRICE">السعر: الأعلى</option>
+        <option value="NEWLY_LISTED">الأحدث</option>
+        <option value="ENDING_SOONEST">ينتهي قريباً</option>
+      </select>
+      <button onclick="searchEbay()" class="btn-primary" style="padding:9px 18px;font-size:0.85rem">
+        بحث
+      </button>
+    </div>
+
+    <!-- Local Filters (shown by default) -->
+    <div id="localFiltersWrap" class="filter-tabs" style="display:flex">
+      <button class="filter-tab active" onclick="setFilter('all', this)">الكل</button>
+      <button class="filter-tab" onclick="setFilter('tech', this)">📱 تقنية</button>
+      <button class="filter-tab" onclick="setFilter('audio', this)">🎧 صوتيات</button>
+      <button class="filter-tab" onclick="setFilter('home', this)">🏠 منزل</button>
+    </div>
+
+    <select class="sort-select" id="localSortSelect" onchange="sortProducts(this.value)">
+      <option value="default">ترتيب افتراضي</option>
+      <option value="price-asc">السعر: الأقل أولاً</option>
+      <option value="price-desc">السعر: الأعلى أولاً</option>
+      <option value="rating">الأعلى تقييماً</option>
+      <option value="newest">الأحدث</option>
+    </select>
+  </div>
+
+  <!-- eBay status bar -->
+  <div id="ebayStatus" style="display:none;font-size:0.82rem;color:var(--muted2);
+    padding:6px 12px;background:rgba(200,169,107,0.06);border:1px solid var(--border);
+    border-radius:8px;align-items:center;gap:8px">
+    <span>🌍</span>
+    <span id="ebayStatusText">جاري البحث على eBay...</span>
+    <span id="ebayResultCount" style="color:var(--gold);font-weight:700"></span>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  g.style.left = e.clientX + "px";
+  g.style.top = e.clientY + "px";
+});
+window.addEventListener("scroll", () => {
+  document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 50);
+});
+function toggleMenu(){
+  document.getElementById("mobileMenu").classList.toggle("open");
+}
+function showToast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+function updateCartCount(){
+  let cart = JSON.parse(localStorage.getItem("cart")) || [];
+  document.getElementById("cartCount").textContent = cart.length;
+}
+document.addEventListener("DOMContentLoaded", updateCartCount);
+
+// ============================================================
+// ===== EBAY INTEGRATION =====
+// ============================================================
+let currentSource = 'local'; // 'local' | 'ebay'
+
+function setSource(src, btn) {
+  currentSource = src;
+  const isEbay = src === 'ebay';
+
+  // Toggle UI
+  const ebayWrap   = document.getElementById('ebaySearchWrap');
+  const localWrap  = document.getElementById('localFiltersWrap');
+  const localSort  = document.getElementById('localSortSelect');
+  const ebayStatus = document.getElementById('ebayStatus');
+
+  if (ebayWrap)   { ebayWrap.style.display   = isEbay ? 'flex' : 'none'; ebayWrap.style.flexWrap = 'wrap'; }
+  if (localWrap)  { localWrap.style.display  = isEbay ? 'none' : 'flex'; }
+  if (localSort)  { localSort.style.display  = isEbay ? 'none' : 'block'; }
+
+  // Reset status
+  if (!isEbay) {
+    if (ebayStatus) ebayStatus.style.display = 'none';
+    filterProducts();
+  } else {
+    // Show search bar immediately
+    if (ebayWrap) ebayWrap.style.display = 'flex';
+    if (ebayStatus) ebayStatus.style.display = 'flex';
+    // Load eBay categories then auto-search "electronics"
+    loadEbayCategories().then(() => {
+      const inp = document.getElementById('ebaySearchInput');
+      if (inp && !inp.value) inp.value = 'electronics';
+      searchEbay();
+    });
+  }
+}
+
+// Load eBay categories into select
+async function loadEbayCategories() {
+  const sel = document.getElementById('ebayCatSelect');
+  if (!sel || sel.options.length > 1) return; // already loaded
+  try {
+    const res = await fetch('/api/ebay/categories').then(r => r.json());
+    if (res.ok) {
+      res.categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.icon + ' ' + cat.name;
+        sel.appendChild(opt);
+      });
+    }
+  } catch {}
+}
+
+// Search eBay and render cards
+async function searchEbay() {
+  const q       = document.getElementById('ebaySearchInput')?.value.trim() || 'electronics';
+  const cat     = document.getElementById('ebayCatSelect')?.value || '';
+  const sort    = document.getElementById('ebaySortSelect')?.value || '';
+  const status  = document.getElementById('ebayStatus');
+  const statusTxt = document.getElementById('ebayStatusText');
+  const resultCount = document.getElementById('ebayResultCount');
+  const grid    = document.getElementById('product-list');
+
+  if (status) status.style.display = 'flex';
+  if (statusTxt) statusTxt.textContent = 'جاري البحث على eBay...';
+  if (resultCount) resultCount.textContent = '';
+
+  // Loading skeleton
+  grid.innerHTML = Array(8).fill('').map(() => `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+      <div class="skeleton" style="height:200px"></div>
+      <div style="padding:18px">
+        <div class="skeleton" style="height:14px;margin-bottom:8px;border-radius:6px"></div>
+        <div class="skeleton" style="height:14px;width:60%;border-radius:6px"></div>
+      </div>
+    </div>`).join('');
+
+  try {
+    const params = new URLSearchParams({ q, limit: 16 });
+    if (cat)  params.append('category', cat);
+    if (sort) params.append('sort', sort);
+
+    const res = await fetch('/api/ebay/search?' + params).then(r => r.json());
+
+    if (!res.ok) {
+      grid.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+          <div style="font-size:3rem;margin-bottom:16px">⚠️</div>
+          <div style="color:var(--red);font-size:0.95rem;margin-bottom:8px">${res.msg}</div>
+          <div style="color:var(--muted);font-size:0.82rem">تأكد من إعداد EBAY_CLIENT_ID و EBAY_CLIENT_SECRET في ملف .env</div>
+        </div>`;
+      if (statusTxt) statusTxt.textContent = 'فشل الاتصال بـ eBay';
+      return;
+    }
+
+    if (res.isSandbox) {
+      if (statusTxt) statusTxt.textContent = 'Sandbox Mode — بيانات تجريبية';
+    } else {
+      if (statusTxt) statusTxt.textContent = 'بيانات حقيقية من eBay';
+    }
+    if (resultCount) resultCount.textContent = `(${res.total?.toLocaleString() || res.products.length} نتيجة)`;
+
+    renderEbayProducts(res.products);
+
+  } catch (e) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+        <div style="font-size:3rem;margin-bottom:16px">📡</div>
+        <div style="color:var(--muted2)">تعذّر الاتصال بـ eBay — تأكد من تشغيل السيرفر</div>
+      </div>`;
+    if (statusTxt) statusTxt.textContent = 'خطأ في الاتصال';
+  }
+}
+
+function renderEbayProducts(products) {
+  const grid = document.getElementById('product-list');
+  if (!products || products.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:60px 20px">
+        <div style="font-size:3rem;margin-bottom:12px">🔍</div>
+        <div style="color:var(--muted2)">لا توجد نتائج — جرب كلمة بحث مختلفة</div>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = products.map(p => {
+    const price = p.price ? `$${parseFloat(p.price).toFixed(2)}` : 'السعر عند البائع';
+    const shippingText = p.shipping === '0' ? '🚚 شحن مجاني' : (p.shipping ? `🚚 $${p.shipping} شحن` : '');
+    const condColor = p.condition === 'NEW' ? 'var(--green)' : 'var(--muted2)';
+    const badge = p.badge === 'top' 
+      ? `<span style="position:absolute;top:12px;right:12px;background:linear-gradient(135deg,var(--gold3),var(--gold));color:#0b0907;font-size:0.62rem;font-weight:900;padding:4px 10px;border-radius:50px;letter-spacing:0.5px">⭐ TOP</span>`
+      : p.badge === 'new' ? `<span style="position:absolute;top:12px;right:12px;background:linear-gradient(135deg,#27ae60,#2ecc71);color:white;font-size:0.62rem;font-weight:900;padding:4px 10px;border-radius:50px">NEW</span>` : '';
+
+    const img = p.image
+      ? `<img src="${p.image}" alt="${p.name.replace(/"/g,'')}" style="width:100%;height:200px;object-fit:cover;transition:transform 0.5s" loading="lazy" onerror="this.src='https://via.placeholder.com/300x200/1d1a16/c8a96b?text=eBay'">`
+      : `<div style="height:200px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:3rem">📦</div>`;
+
+    return `
+      <div class="product-card" onclick="openEbayItem('${p.ebayUrl}','${p.id}')"
+        style="cursor:pointer;position:relative">
+        <div class="product-img-wrap">
+          ${img}
+          ${badge}
+          <div style="position:absolute;bottom:8px;left:8px;background:rgba(11,9,7,0.85);
+            color:${condColor};font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:50px">
+            ${p.condition || 'Used'}
+          </div>
+          <div class="product-overlay">
+            <div class="product-actions">
+              <button class="quick-add" onclick="event.stopPropagation();openEbayItem('${p.ebayUrl}','${p.id}')">
+                🌍 عرض على eBay
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="product-info">
+          <div class="product-category">eBay · ${p.category || 'عام'}</div>
+          <h3 style="font-size:0.85rem;line-height:1.4;-webkit-line-clamp:2;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden">
+            ${p.name}
+          </h3>
+          <div class="product-meta">
+            <div class="product-price-wrap">
+              <span class="product-price">${price}</span>
+            </div>
+            ${p.location ? `<span style="font-size:0.72rem;color:var(--muted)">📍 ${p.location}</span>` : ''}
+          </div>
+          ${shippingText ? `<div style="font-size:0.75rem;color:var(--green);margin-bottom:10px">${shippingText}</div>` : ''}
+          <button class="add-cart-btn" onclick="event.stopPropagation();openEbayItem('${p.ebayUrl}','${p.id}')">
+            🌍 اشترِ من eBay ↗
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openEbayItem(url, id) {
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
+// Auto-search eBay when user stops typing (debounce)
+let _ebayDebounce;
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('ebaySearchInput');
+  if (inp) {
+    inp.addEventListener('input', () => {
+      clearTimeout(_ebayDebounce);
+      _ebayDebounce = setTimeout(() => {
+        if (currentSource === 'ebay' && inp.value.trim().length > 2) searchEbay();
+      }, 600);
+    });
+  }
+});
+
+</script>
+</body>
+</html>

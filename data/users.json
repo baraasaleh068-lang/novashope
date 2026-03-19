@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1,
+    "name": "المدير",
+    "email": "baraasaleh079@icloud.com",
+    "password": "$2a$12$btse8hhylYCzWOOBUop9beCukarKMBnt4Zb6utvrYrRr4s6aow24i",
+    "role": "admin",
+    "emailVerified": true,
+    "verifyCode": null,
+    "createdAt": "2026-03-16T18:59:57.000Z",
+    "orders": [
+      "ORD-1773774808518"
+    ]
+  },
+  {
+    "id": 1773783445213,
+    "name": "baraa saleh",
+    "email": "baraasaleh079@icloud.com",
+    "password": "$2a$12$5PYf3XVdUMeoeYKBtXr/2e0SWPF0yIEBu9Ekbme8hmaHW43jkOssW",
+    "role": "customer",
+    "emailVerified": true,
+    "verifyCode": null,
+    "verifyExpiry": 1773784045213,
+    "createdAt": "2026-03-17T21:37:25.213Z",
+    "orders": []
+  },
+  {
+    "id": 1773827695583,
+    "name": "B𓂆",
+    "email": "baraasaleh079@gmail.com",
+    "password": "$2a$12$ZMMq/txGo8Hp78b7ghebWurFYYKw47nQpdLs2v8xqOK.4yLIVUNVa",
+    "role": "customer",
+    "emailVerified": true,
+    "verifyCode": null,
+    "createdAt": "2026-03-18T09:54:55.583Z",
+    "orders": [
+      "ORD-1773827886754"
+    ],
+    "twoFA": true
+  }
+]

@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8a96b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NovaShop">
+<title>حسابي — NovaShop</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="db.js"></script>
+<script src="api.js"></script>
+<style>
+.profile-page { max-width: 860px; margin: 0 auto; padding: 110px 24px 80px; }
+
+/* Header card */
+.profile-header {
+  background: linear-gradient(135deg, var(--card), var(--card2));
+  border: 1px solid var(--border); border-radius: 20px;
+  padding: 28px 32px; margin-bottom: 28px;
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+}
+.profile-avatar {
+  width: 68px; height: 68px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem; font-weight: 700;
+}
+.profile-name { font-size: 1.4rem; font-weight: 900; }
+.profile-email { color: var(--muted); font-size: 0.88rem; margin-top: 2px; }
+.verified-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);
+  color: #22c55e; padding: 3px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700;
+  margin-top: 6px;
+}
+.unverified-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+  color: var(--gold); padding: 3px 10px; border-radius: 50px; font-size: 0.75rem; font-weight: 700;
+  margin-top: 6px; cursor: pointer;
+}
+.header-actions { margin-right: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.logout-btn {
+  padding: 9px 18px; border-radius: 9px;
+  border: 1px solid rgba(239,68,68,0.3); background: none;
+  color: #ef4444; cursor: pointer; font-family: 'Tajawal', sans-serif;
+  font-size: 0.88rem; transition: all 0.2s;
+}
+.logout-btn:hover { background: rgba(239,68,68,0.1); }
+
+/* Tabs */
+.profile-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+.profile-tab {
+  padding: 9px 22px; border-radius: 10px;
+  border: 1px solid var(--border); background: none;
+  color: var(--muted); cursor: pointer;
+  font-family: 'Tajawal', sans-serif; font-size: 0.92rem; font-weight: 600;
+  transition: all 0.2s;
+}
+.profile-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+/* Section card */
+.profile-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; margin-bottom: 20px;
+}
+.profile-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 22px; display: flex; align-items: center; gap: 8px; }
+
+/* Edit fields */
+.edit-field { display: flex; flex-direction: column; gap: 7px; margin-bottom: 16px; }
+.edit-field label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.edit-field input {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 11px 14px;
+  border-radius: 10px; font-family: 'Tajawal', sans-serif;
+  font-size: 0.92rem; outline: none; transition: border-color 0.2s;
+}
+.edit-field input:focus { border-color: var(--accent); }
+.edit-field input:disabled { opacity: 0.5; cursor: not-allowed; }
+.edit-field input::placeholder { color: var(--muted); }
+.save-btn {
+  padding: 11px 28px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white; border: none; border-radius: 10px;
+  font-size: 0.95rem; font-weight: 700; cursor: pointer;
+  font-family: 'Tajawal', sans-serif; transition: opacity 0.2s;
+  box-shadow: 0 4px 15px rgba(200,169,107,0.25);
+}
+.save-btn:hover { opacity: 0.9; }
+.save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.field-alert {
+  padding: 10px 14px; border-radius: 9px; font-size: 0.85rem;
+  margin-bottom: 12px; display: none;
+}
+.field-alert.error { background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; }
+.field-alert.success { background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); color:#22c55e; }
+.field-alert.show { display: block; animation: fadeInDown 0.3s ease; }
+
+/* OTP inline */
+.otp-inline { display: flex; gap: 8px; justify-content: center; margin: 12px 0; }
+.otp-box-sm {
+  width: 42px; height: 50px; background: var(--bg); border: 2px solid var(--border);
+  border-radius: 9px; text-align: center; font-size: 1.3rem; font-weight: 700;
+  color: var(--text); font-family: 'DM Mono', monospace; outline: none;
+  transition: border-color 0.2s;
+}
+.otp-box-sm:focus { border-color: var(--accent); }
+.otp-box-sm.filled { border-color: var(--accent); background: rgba(200,169,107,0.08); }
+.verify-inline-box {
+  background: rgba(200,169,107,0.06); border: 1px solid rgba(200,169,107,0.2);
+  border-radius: 12px; padding: 20px; display: none; margin-top: 8px;
+}
+.verify-inline-box.show { display: block; animation: fadeInUp 0.3s ease; }
+.preview-code-sm {
+  font-family: 'DM Mono', monospace; font-size: 1.5rem; font-weight: 700;
+  color: var(--accent); text-align: center; letter-spacing: 5px;
+  padding: 10px; background: rgba(200,169,107,0.1); border-radius: 8px;
+  border: 1px dashed var(--accent); margin: 10px 0;
+}
+
+/* Orders */
+.order-card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 20px; margin-bottom: 14px;
+  transition: border-color 0.2s;
+}
+.order-card:hover { border-color: var(--accent); }
+.order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+.order-id { font-family: 'DM Mono', monospace; font-size: 0.88rem; color: var(--accent); font-weight: 700; }
+.order-date { color: var(--muted); font-size: 0.78rem; margin-top: 3px; }
+.status-badge { padding: 4px 12px; border-radius: 50px; font-size: 0.78rem; font-weight: 700; }
+.status-pending   { background:rgba(245,158,11,0.1); color:var(--gold);    border:1px solid rgba(245,158,11,0.3); }
+.status-confirmed { background:rgba(34,197,94,0.1);  color:#22c55e;        border:1px solid rgba(34,197,94,0.3); }
+.status-shipped   { background:rgba(181,112,58,0.1);  color:var(--accent3); border:1px solid rgba(181,112,58,0.3); }
+.status-delivered { background:rgba(200,169,107,0.1); color:var(--accent);  border:1px solid var(--accent); }
+.status-rejected  { background:rgba(239,68,68,0.1);  color:#ef4444;        border:1px solid rgba(239,68,68,0.3); }
+.order-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); }
+.order-total { font-family:'DM Mono',monospace; font-weight:700; color:var(--accent); }
+.order-ref { color:var(--muted); font-size:0.78rem; }
+.empty-state { text-align:center; padding:60px 0; color:var(--muted); }
+.empty-state .ei { font-size:3.5rem; margin-bottom:14px; }
+
+/* ===== 2FA TOGGLE SWITCH ===== */
+.tfa-toggle-wrap {
+  position: relative; display: inline-block;
+  width: 52px; height: 28px; cursor: pointer; flex-shrink: 0;
+}
+.tfa-toggle-wrap input { opacity: 0; width: 0; height: 0; }
+.tfa-slider {
+  position: absolute; inset: 0; background: var(--border);
+  border-radius: 34px; transition: 0.3s;
+}
+.tfa-slider:before {
+  content: ""; position: absolute;
+  height: 20px; width: 20px; left: 4px; bottom: 4px;
+  background: white; border-radius: 50%; transition: 0.3s;
+}
+.tfa-toggle-wrap input:checked + .tfa-slider { background: #22c55e; }
+.tfa-toggle-wrap input:checked + .tfa-slider:before { transform: translateX(24px); }
+
+/* ===== SESSION CARD ===== */
+.session-card {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: 12px;
+  border: 1px solid var(--border); margin-bottom: 10px;
+  transition: border-color 0.2s; background: var(--bg);
+}
+.session-card.current-session { border-color: rgba(200,169,107,0.4); background: rgba(200,169,107,0.04); }
+.session-icon {
+  width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+  background: rgba(200,169,107,0.1); display: flex; align-items: center;
+  justify-content: center; font-size: 1.4rem;
+}
+.session-info { flex: 1; min-width: 0; }
+.session-name { font-weight: 700; font-size: 0.9rem; margin-bottom: 3px; }
+.session-meta { color: var(--muted); font-size: 0.76rem; line-height: 1.5; }
+.session-end-btn {
+  padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.25);
+  color: #ef4444; font-family: "Tajawal", sans-serif; font-size: 0.8rem;
+  font-weight: 600; transition: all 0.2s; flex-shrink: 0;
+}
+.session-end-btn:hover { background: rgba(239,68,68,0.15); }
+.session-current-badge {
+  background: rgba(34,197,94,0.12); color: #22c55e;
+  border: 1px solid rgba(34,197,94,0.3); border-radius: 50px;
+  padding: 3px 10px; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+</style>
+<script src="notifications.js" defer></script>
+</head>
+<body>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo"><span class="logo-icon">◈</span><span>Nova<strong>Shop</strong></span></a>
+    <nav class="nav-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="products.html">المنتجات</a>
+      <a href="chat.html">💬 الدعم</a>
+      <a href="cart.html" class="cart-link">السلة<span class="cart-badge" id="cartCount">0</span></a>
+      <a href="profile.html" class="active" style="color:var(--accent)">👤 حسابي</a>
+      <span id="adminNavItem"></span>
+      <button class="notif-btn" onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifToggle" style="display:none">🔔 <span class="notif-badge" style="display:none">0</span></button>
+    </nav>
+    <button class="notif-btn notif-btn-mobile" onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifToggleMobile" style="display:none;position:relative;background:rgba(200,169,107,0.08);border:1px solid rgba(200,169,107,0.2);border-radius:10px;padding:7px 10px;cursor:pointer;align-items:center;gap:4px;color:#94a3b8;font-size:1rem;">🔔<span class="notif-badge" style="display:none">0</span></button><button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">الرئيسية</a>
+    <a href="products.html">المنتجات</a>
+    <a href="chat.html">💬 الدعم</a>
+    <a href="cart.html">السلة</a>
+    <a href="profile.html">حسابي</a>
+  
+    <button onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifMobileMenuBtn" style="display:none;background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:1rem;padding:14px 28px;text-align:right;width:100%;cursor:pointer;border-bottom:1px solid var(--border);">🔔 الإشعارات <span id="notifMobileCount" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-right:4px;display:none">0</span></button></div>
+</header>
+
+<div class="profile-page">
+  <div class="profile-header" id="profileHeader"></div>
+
+  <div class="profile-tabs">
+    <button class="profile-tab active" onclick="showTab('orders',this)">📦 طلباتي</button>
+    <button class="profile-tab" onclick="showTab('editInfo',this)">✏️ تعديل البيانات</button>
+    <button class="profile-tab" onclick="showTab('changePass',this)">🔑 كلمة المرور</button>
+    <button class="profile-tab" onclick="showTab('security',this)" id="securityTabBtn">🔐 الأمان</button>
+  </div>
+
+  <!-- ===== ORDERS ===== -->
+  <div id="tab-orders">
+    <div id="ordersList"></div>
+  </div>
+
+  <!-- ===== EDIT INFO ===== -->
+  <div id="tab-editInfo" style="display:none">
+    <div class="profile-card">
+      <h3>✏️ تعديل المعلومات الشخصية</h3>
+      <div id="infoAlert" class="field-alert"></div>
+
+      <div class="edit-field">
+        <label>الاسم الكامل</label>
+        <input type="text" id="editName" placeholder="الاسم الكامل">
+      </div>
+      <div class="edit-field">
+        <label>البريد الإلكتروني</label>
+        <input type="email" id="editEmail" placeholder="example@email.com">
+        <small style="color:var(--muted);font-size:0.78rem">⚠️ تغيير البريد يتطلب تأكيداً جديداً</small>
+      </div>
+      <button class="save-btn" id="saveInfoBtn" onclick="saveInfo()">حفظ التغييرات ✓</button>
+
+      <!-- Inline verify box for new email -->
+      <div class="verify-inline-box" id="inlineVerifyBox">
+        <div style="font-weight:700; margin-bottom:8px; color:var(--text)">📧 تأكيد البريد الجديد</div>
+        <div style="color:var(--muted);font-size:0.85rem;margin-bottom:4px">تم إرسال كود التحقق إلى:</div>
+        <div style="color:var(--accent);font-weight:700;font-size:0.9rem;margin-bottom:10px" id="inlineNewEmail"></div>
+        <!-- Simulated preview -->
+        <div style="background:var(--bg);border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.78rem;color:var(--muted)">
+          📬 محاكاة — الكود:
+          <div class="preview-code-sm" id="inlinePreviewCode">------</div>
+        </div>
+        <div class="otp-inline" id="inlineOtpBoxes">
+          <input class="otp-box-sm" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box-sm" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box-sm" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box-sm" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box-sm" maxlength="1" type="text" inputmode="numeric">
+          <input class="otp-box-sm" maxlength="1" type="text" inputmode="numeric">
+        </div>
+        <div id="inlineOtpAlert" class="field-alert error" style="margin-top:8px"></div>
+        <button class="save-btn" style="width:100%;margin-top:10px" onclick="confirmNewEmail()">تأكيد البريد الجديد ✓</button>
+        <div style="text-align:center;margin-top:8px">
+          <span style="color:var(--accent);cursor:pointer;font-size:0.85rem;text-decoration:underline" onclick="resendInlineCode()">إعادة الإرسال</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== CHANGE PASSWORD ===== -->
+  <div id="tab-changePass" style="display:none">
+    <div class="profile-card">
+      <h3>🔑 تغيير كلمة المرور</h3>
+      <div id="passAlert" class="field-alert"></div>
+      <div class="edit-field">
+        <label>كلمة المرور الحالية</label>
+        <input type="password" id="curPass" placeholder="••••••••">
+      </div>
+      <div class="edit-field">
+        <label>كلمة المرور الجديدة</label>
+        <input type="password" id="newPass" placeholder="6 أحرف على الأقل">
+      </div>
+      <div class="edit-field">
+        <label>تأكيد كلمة المرور الجديدة</label>
+        <input type="password" id="newPass2" placeholder="••••••••">
+      </div>
+      <button class="save-btn" id="savePassBtn" onclick="savePassword()">تحديث كلمة المرور 🔐</button>
+    </div>
+  </div>
+
+  <!-- ===== SECURITY TAB ===== -->
+  <div id="tab-security" style="display:none">
+
+    <!-- 2FA Card -->
+    <div class="profile-card" style="margin-bottom:20px">
+      <h3>🔐 التحقق بخطوتين (2FA)</h3>
+      <div id="tfaStatusRow" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:20px">
+        <div>
+          <div style="font-weight:700;font-size:0.95rem;margin-bottom:4px" id="tfaStatusLabel">جاري التحميل...</div>
+          <div style="color:var(--muted);font-size:0.82rem;max-width:380px;line-height:1.6">
+            عند التفعيل، سيُرسَل كود على بريدك في كل مرة تسجّل دخولك من جهاز جديد.
+          </div>
+        </div>
+        <label class="tfa-toggle-wrap" id="tfaToggleWrap">
+          <input type="checkbox" id="tfaCheckbox" onchange="toggle2FA(this)">
+          <span class="tfa-slider"></span>
+        </label>
+      </div>
+      <div id="tfaPasswordRow" style="display:none">
+        <div style="background:rgba(200,169,107,0.06);border:1px solid rgba(200,169,107,0.2);border-radius:12px;padding:16px;margin-bottom:12px">
+          <div style="font-size:0.85rem;color:var(--muted);margin-bottom:10px">
+            أدخل كلمة المرور لتأكيد <span id="tfaActionLabel">تفعيل</span> التحقق بخطوتين
+          </div>
+          <input type="password" id="tfaPasswordInput"
+            placeholder="كلمة المرور الحالية"
+            style="width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);
+                   border-radius:9px;color:var(--text);font-family:'Tajawal',sans-serif;
+                   font-size:0.9rem;outline:none;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')confirm2FA()">
+          <div id="tfaAlert" style="margin-top:8px;font-size:0.84rem;color:#ef4444;display:none"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="confirm2FA()"
+            style="flex:1;padding:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+                   color:white;border:none;border-radius:9px;cursor:pointer;font-family:'Tajawal',sans-serif;font-weight:700">
+            تأكيد ✓
+          </button>
+          <button onclick="cancel2FA()"
+            style="padding:10px 16px;background:none;border:1px solid var(--border);color:var(--muted);
+                   border-radius:9px;cursor:pointer;font-family:'Tajawal',sans-serif">
+            إلغاء
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Sessions Card -->
+    <div class="profile-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <h3 style="margin:0">📱 الأجهزة النشطة</h3>
+        <button onclick="logoutAllOthers()"
+          style="padding:8px 16px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                 color:#ef4444;border-radius:9px;cursor:pointer;font-family:'Tajawal',sans-serif;
+                 font-size:0.84rem;font-weight:700">
+          🚪 إنهاء جميع الجلسات الأخرى
+        </button>
+      </div>
+      <div id="sessionsList">
+        <div style="text-align:center;padding:40px;color:var(--muted)">
+          <div style="font-size:2.5rem;margin-bottom:8px">📱</div>
+          <div>جاري التحميل...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  g.style.left = e.clientX + "px";
+  g.style.top = e.clientY + "px";
+});
+window.addEventListener("scroll", () => document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 50));
+function toggleMenu(){ document.getElementById("mobileMenu").classList.toggle("open"); }
+
+const allProducts = JSON.parse(localStorage.getItem("products")) || [
+  {id:1,name:"Smart Watch Pro",price:29,image:"https://picsum.photos/300/200?random=1"},
+  {id:2,name:"Wireless Earbuds",price:25,image:"https://picsum.photos/300/200?random=2"},
+  {id:3,name:"LED Strip Lights",price:15,image:"https://picsum.photos/300/200?random=3"},
+];
+
+const statusMap = {
+  pending:   {label:"⏳ قيد المراجعة", cls:"status-pending"},
+  confirmed: {label:"✅ مؤكد",          cls:"status-confirmed"},
+  shipped:   {label:"🚚 تم الشحن",      cls:"status-shipped"},
+  delivered: {label:"📦 تم التسليم",   cls:"status-delivered"},
+  rejected:  {label:"❌ مرفوض",         cls:"status-rejected"},
+};
+
+let currentSession = null;
+let pendingNewEmail = "";
+
+document.addEventListener("DOMContentLoaded", () => {
+  currentSession = DB.getSession();
+  if (!currentSession) { window.location.href = "login.html"; return; }
+
+  // Show admin link if admin
+  if (currentSession.role === "admin") {
+    const el = document.getElementById("adminNavItem");
+    if (el) el.innerHTML = `<a href="admin.html" class="nav-admin">⚙ الإدارة</a>`;
+  }
+
+  document.getElementById("cartCount").textContent = (JSON.parse(localStorage.getItem("cart"))||[]).length;
+  renderHeader();
+  renderOrders();
+  setupInlineOtp();
+});
+
+function renderHeader() {
+  const user = DB.getCurrentUser() || currentSession;
+  const initial = (user.name||"؟")[0];
+  const verified = user.emailVerified !== false;
+  document.getElementById("profileHeader").innerHTML = `
+    <div class="profile-avatar">${initial}</div>
+    <div>
+      <div class="profile-name">${user.name}</div>
+      <div class="profile-email">${user.email || "—"}</div>
+      <div class="${verified ? 'verified-badge' : 'unverified-badge'}" ${!verified ? 'onclick="triggerReverify()"' : ''}>
+        ${verified ? '✓ بريد مؤكد' : '⚠️ بريد غير مؤكد · اضغط لتأكيده'}
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="logout-btn" onclick="doLogout()">خروج ↩</button>
+    </div>
+  `;
+  // Pre-fill edit fields
+  document.getElementById("editName").value = user.name || "";
+  document.getElementById("editEmail").value = user.email || "";
+}
+
+function renderOrders() {
+  const orders = DB.getUserOrders(currentSession.id).slice().reverse();
+  const container = document.getElementById("ordersList");
+  if (orders.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="ei">📦</div><h3>لا توجد طلبات بعد</h3><p style="margin-bottom:20px">ابدأ التسوق الآن!</p><a href="products.html" class="btn-primary" style="display:inline-flex">تسوّق الآن ←</a></div>`;
+    return;
+  }
+  container.innerHTML = "";
+  orders.forEach(order => {
+    const st = statusMap[order.status] || statusMap.pending;
+    const date = new Date(order.createdAt).toLocaleDateString("ar-JO",{day:"numeric",month:"long",year:"numeric"});
+    const div = document.createElement("div");
+    div.className = "order-card";
+    div.innerHTML = `
+      <div class="order-top">
+        <div><div class="order-id">${order.id}</div><div class="order-date">${date}</div></div>
+        <div class="status-badge ${st.cls}">${st.label}</div>
+      </div>
+      <div class="order-footer">
+        <div class="order-total">$${order.total.toFixed(2)}</div>
+        <div class="order-ref">ref: ${order.paymentRef||"—"}</div>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+
+// ===== SAVE INFO =====
+function saveInfo() {
+  const name  = document.getElementById("editName").value.trim();
+  const email = document.getElementById("editEmail").value.trim();
+  const alert = document.getElementById("infoAlert");
+
+  if (!name) { showAlert(alert, "error", "الاسم مطلوب"); return; }
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showAlert(alert, "error", "صيغة البريد غير صحيحة"); return; }
+
+  setLoading("saveInfoBtn", true, "حفظ التغييرات ✓");
+  setTimeout(() => {
+    const res = DB.updateUser(currentSession.id, { name, email });
+    setLoading("saveInfoBtn", false, "حفظ التغييرات ✓");
+
+    if (!res.ok) { showAlert(alert, "error", res.msg); return; }
+
+    if (res.needVerify) {
+      // Show inline verify
+      pendingNewEmail = res.newEmail;
+      document.getElementById("inlineNewEmail").textContent = pendingNewEmail;
+      document.getElementById("inlinePreviewCode").textContent = res.verifyCode;
+      document.getElementById("inlineVerifyBox").classList.add("show");
+      showAlert(alert, "success", "تم الحفظ · أكّد بريدك الجديد");
+    } else {
+      currentSession = DB.getSession();
+      renderHeader();
+      showAlert(alert, "success", "✅ تم حفظ التغييرات بنجاح!");
+      showToast("✅ تم تحديث بياناتك");
+    }
+  }, 400);
+}
+
+// ===== INLINE OTP =====
+function setupInlineOtp() {
+  const boxes = document.querySelectorAll(".otp-box-sm");
+  boxes.forEach((box, i) => {
+    box.addEventListener("input", () => {
+      box.value = box.value.replace(/\D/g, "").slice(-1);
+      box.classList.toggle("filled", box.value !== "");
+      if (box.value && i < boxes.length - 1) boxes[i + 1].focus();
+    });
+    box.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !box.value && i > 0) boxes[i - 1].focus();
+    });
+  });
+}
+
+function getInlineOtp() {
+  return [...document.querySelectorAll(".otp-box-sm")].map(b => b.value).join("");
+}
+
+function confirmNewEmail() {
+  const code = getInlineOtp();
+  const alert = document.getElementById("inlineOtpAlert");
+  if (code.length < 6) { showAlert(alert, "error", "أدخل الكود كاملاً"); return; }
+
+  const res = DB.verifyEmail(pendingNewEmail, code);
+  if (!res.ok) { showAlert(alert, "error", res.msg); return; }
+
+  currentSession = DB.getSession();
+  document.getElementById("inlineVerifyBox").classList.remove("show");
+  renderHeader();
+  showToast("✅ تم تأكيد البريد الجديد بنجاح!");
+}
+
+function resendInlineCode() {
+  const res = DB.resendCode(pendingNewEmail);
+  if (!res.ok) { showToast("⚠️ " + res.msg); return; }
+  document.getElementById("inlinePreviewCode").textContent = res.verifyCode;
+  showToast("✅ تم إعادة الإرسال");
+}
+
+function triggerReverify() {
+  const res = DB.resendCode(currentSession.email);
+  if (!res.ok) { showToast("⚠️ " + res.msg); return; }
+  pendingNewEmail = currentSession.email;
+  document.getElementById("inlineNewEmail").textContent = currentSession.email;
+  document.getElementById("inlinePreviewCode").textContent = res.verifyCode;
+  document.getElementById("inlineVerifyBox").classList.add("show");
+  showTab("editInfo", document.querySelectorAll(".profile-tab")[1]);
+  showToast("📧 تم إرسال كود التحقق");
+}
+
+// ===== SAVE PASSWORD =====
+function savePassword() {
+  const cur   = document.getElementById("curPass").value;
+  const pass  = document.getElementById("newPass").value;
+  const pass2 = document.getElementById("newPass2").value;
+  const alert = document.getElementById("passAlert");
+
+  if (!cur || !pass) { showAlert(alert, "error", "يرجى تعبئة جميع الحقول"); return; }
+  if (pass.length < 6) { showAlert(alert, "error", "كلمة المرور الجديدة يجب 6 أحرف على الأقل"); return; }
+  if (pass !== pass2) { showAlert(alert, "error", "كلمتا المرور غير متطابقتين"); return; }
+
+  setLoading("savePassBtn", true, "تحديث كلمة المرور 🔐");
+  setTimeout(() => {
+    const res = DB.updateUser(currentSession.id, { currentPassword: cur, newPassword: pass });
+    setLoading("savePassBtn", false, "تحديث كلمة المرور 🔐");
+    if (!res.ok) { showAlert(alert, "error", res.msg); return; }
+    document.getElementById("curPass").value = "";
+    document.getElementById("newPass").value = "";
+    document.getElementById("newPass2").value = "";
+    showAlert(alert, "success", "✅ تم تغيير كلمة المرور بنجاح!");
+    showToast("🔐 تم تحديث كلمة المرور");
+  }, 400);
+}
+
+// ===== TABS =====
+function showTab(tab, btn) {
+  if (tab === "security") { loadSessions(); load2FAStatus(); }
+  document.querySelectorAll(".profile-tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  ["orders","editInfo","changePass","security"].forEach(t => {
+    const el = document.getElementById("tab-"+t);
+    if (el) el.style.display = t === tab ? "block" : "none";
+  });
+}
+
+function doLogout() {
+  DB.logout();
+  window.location.href = "index.html";
+}
+
+function setLoading(id, loading, defaultText) {
+  const btn = document.getElementById(id);
+  btn.disabled = loading;
+  btn.textContent = loading ? "⏳ جاري الحفظ..." : defaultText;
+}
+
+function showAlert(el, type, msg) {
+  el.className = "field-alert " + type + " show";
+  el.textContent = msg;
+  if (type !== "success") setTimeout(() => el.classList.remove("show"), 5000);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ================================================================
+// SESSION MANAGEMENT
+// ================================================================
+async function loadSessions() {
+  const token = localStorage.getItem("ns_token");
+  if (!token) return;
+  const cont = document.getElementById("sessionsList");
+  try {
+    const res  = await fetch("/api/sessions", {
+      headers: { "Authorization": "Bearer " + token },
+      signal: AbortSignal.timeout(5000)
+    });
+    const data = await res.json();
+    if (!data.ok) { cont.innerHTML = `<div style="color:var(--muted);text-align:center;padding:30px">تعذّر تحميل الجلسات</div>`; return; }
+    renderSessions(data.sessions);
+  } catch {
+    // Fallback: show current session only
+    const session = JSON.parse(localStorage.getItem("ns_session") || "null");
+    if (session) {
+      renderSessions([{
+        id: "local", deviceType: "desktop", browser: "Current Browser",
+        os: "Unknown", ip: "—", createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString(), current: true
+      }]);
+    }
+  }
+}
+
+function renderSessions(sessions) {
+  const cont = document.getElementById("sessionsList");
+  if (!sessions || sessions.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted)">
+      <div style="font-size:2.5rem;margin-bottom:8px">📭</div><div>لا توجد جلسات نشطة</div></div>`;
+    return;
+  }
+  const icons = { mobile: "📱", desktop: "🖥️", tablet: "📟" };
+  cont.innerHTML = "";
+  sessions.forEach(s => {
+    const card = document.createElement("div");
+    card.className = "session-card" + (s.current ? " current-session" : "");
+    const ago = timeAgo(s.lastActive);
+    const created = new Date(s.createdAt).toLocaleDateString("ar-JO", { day:"numeric", month:"short", year:"numeric" });
+    card.innerHTML = `
+      <div class="session-icon">${icons[s.deviceType] || "💻"}</div>
+      <div class="session-info">
+        <div class="session-name">${s.browser || "متصفح"} — ${s.os || "Unknown"}</div>
+        <div class="session-meta">
+          🌐 ${s.ip || "—"} &nbsp;·&nbsp; 📅 ${created}<br>
+          ⏱️ آخر نشاط: ${ago}
+        </div>
+      </div>
+      ${s.current
+        ? `<span class="session-current-badge">✓ الجهاز الحالي</span>`
+        : `<button class="session-end-btn" onclick="endSession('${s.id}', this)">إنهاء</button>`
+      }
+    `;
+    cont.appendChild(card);
+  });
+}
+
+async function endSession(sessionId, btn) {
+  const token = localStorage.getItem("ns_token");
+  if (!token) return;
+  btn.textContent = "...";
+  btn.disabled = true;
+  try {
+    const res  = await fetch("/api/sessions/" + sessionId, {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + token },
+      signal: AbortSignal.timeout(5000)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.closest(".session-card").style.animation = "fadeOut 0.3s ease forwards";
+      setTimeout(() => { btn.closest(".session-card")?.remove(); }, 300);
+      showAlert(document.getElementById("securityAlert") || null, "success", "✅ تم إنهاء الجلسة");
+      showToast("✅ تم إنهاء الجلسة");
+    } else {
+      btn.textContent = "إنهاء"; btn.disabled = false;
+    }
+  } catch {
+    btn.textContent = "إنهاء"; btn.disabled = false;
+  }
+}
+
+async function logoutAllOthers() {
+  const token = localStorage.getItem("ns_token");
+  if (!token) return;
+  if (!confirm("هل تريد إنهاء جميع الجلسات الأخرى؟ ستبقى مسجّلاً على هذا الجهاز فقط.")) return;
+  try {
+    const res  = await fetch("/api/sessions/all/others", {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + token },
+      signal: AbortSignal.timeout(5000)
+    });
+    const data = await res.json();
+    if (data.ok) { showToast("✅ تم إنهاء جميع الجلسات الأخرى"); loadSessions(); }
+  } catch { showToast("⚠️ تعذّرت العملية، حاول مجدداً"); }
+}
+
+// ================================================================
+// 2FA MANAGEMENT
+// ================================================================
+let _tfaIntended = null; // true = enable, false = disable
+
+async function load2FAStatus() {
+  const token = localStorage.getItem("ns_token");
+  if (!token) return;
+  try {
+    const res  = await fetch("/api/auth/2fa/status", {
+      headers: { "Authorization": "Bearer " + token },
+      signal: AbortSignal.timeout(5000)
+    });
+    const data = await res.json();
+    set2FAUI(data.twoFA);
+  } catch {
+    // Offline fallback
+    const session = JSON.parse(localStorage.getItem("ns_session") || "null");
+    set2FAUI(false);
+  }
+}
+
+function set2FAUI(enabled) {
+  const lbl = document.getElementById("tfaStatusLabel");
+  const chk = document.getElementById("tfaCheckbox");
+  if (lbl) lbl.innerHTML = enabled
+    ? `<span style="color:#22c55e">✅ التحقق بخطوتين مفعّل</span>`
+    : `<span style="color:var(--muted)">⭕ التحقق بخطوتين غير مفعّل</span>`;
+  if (chk) { chk.checked = enabled; chk._current = enabled; }
+}
+
+function toggle2FA(chk) {
+  _tfaIntended = chk.checked;
+  document.getElementById("tfaActionLabel").textContent = _tfaIntended ? "تفعيل" : "إيقاف";
+  document.getElementById("tfaPasswordRow").style.display = "block";
+  document.getElementById("tfaPasswordInput").focus();
+  // Reset checkbox visually until confirmed
+  chk.checked = !_tfaIntended;
+}
+
+async function confirm2FA() {
+  const token = localStorage.getItem("ns_token");
+  const pass  = document.getElementById("tfaPasswordInput").value;
+  const alert = document.getElementById("tfaAlert");
+  if (!pass) { alert.textContent = "⚠️ أدخل كلمة المرور"; alert.style.display = "block"; return; }
+  alert.style.display = "none";
+
+  try {
+    const res  = await fetch("/api/auth/2fa/toggle", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + (token || "") },
+      body: JSON.stringify({ enable: _tfaIntended, password: pass }),
+      signal: AbortSignal.timeout(6000)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      set2FAUI(data.twoFA);
+      document.getElementById("tfaPasswordRow").style.display = "none";
+      document.getElementById("tfaPasswordInput").value = "";
+      showToast(data.msg);
+    } else {
+      alert.textContent = data.msg || "خطأ"; alert.style.display = "block";
+    }
+  } catch {
+    // Offline: toggle locally
+    set2FAUI(_tfaIntended);
+    document.getElementById("tfaPasswordRow").style.display = "none";
+    showToast(_tfaIntended ? "✅ تم التفعيل (محلي)" : "⚠️ تم الإيقاف (محلي)");
+  }
+}
+
+function cancel2FA() {
+  const chk = document.getElementById("tfaCheckbox");
+  if (chk) chk.checked = chk._current;
+  document.getElementById("tfaPasswordRow").style.display = "none";
+  document.getElementById("tfaPasswordInput").value = "";
+  document.getElementById("tfaAlert").style.display = "none";
+}
+
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)     return "الآن";
+  if (diff < 3600)   return `منذ ${Math.floor(diff/60)} دقيقة`;
+  if (diff < 86400)  return `منذ ${Math.floor(diff/3600)} ساعة`;
+  return `منذ ${Math.floor(diff/86400)} يوم`;
+}
+
+</script>
+<style>@keyframes fadeOut { to { opacity:0; transform:translateX(20px); } }</style>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8a96b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NovaShop">
+<title>السلة — NovaShop</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="db.js"></script>
+<script src="store.js" defer></script>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo"><span class="logo-icon">◈</span><span>Nova<strong>Shop</strong></span></a>
+    <nav class="nav-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="products.html">المنتجات</a>
+      <a href="chat.html">💬 الدعم</a>
+      <a href="cart.html" class="active cart-link">السلة<span class="cart-badge" id="cartCount">0</span></a>
+      <span id="userNavItem"></span>
+      <span id="adminNavItem"></span>
+    </nav>
+    <button class="notif-btn notif-btn-mobile" onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifToggleMobile" style="display:none;position:relative;background:rgba(200,169,107,0.08);border:1px solid rgba(200,169,107,0.2);border-radius:10px;padding:7px 10px;cursor:pointer;align-items:center;gap:4px;color:#94a3b8;font-size:1rem;">🔔<span class="notif-badge" style="display:none">0</span></button><button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">الرئيسية</a>
+    <a href="products.html">المنتجات</a>
+    <a href="chat.html">💬 الدعم</a>
+    <a href="cart.html">السلة</a>
+    <a href="profile.html">حسابي</a>
+    <span id="adminMobileItem"></span>
+  
+    <button onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifMobileMenuBtn" style="display:none;background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:1rem;padding:14px 28px;text-align:right;width:100%;cursor:pointer;border-bottom:1px solid var(--border);">🔔 الإشعارات <span id="notifMobileCount" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-right:4px;display:none">0</span></button></div>
+</header>
+
+<div class="cart-wrapper" id="cartWrapper"></div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  g.style.left = e.clientX + "px";
+  g.style.top = e.clientY + "px";
+});
+window.addEventListener("scroll", () => document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 50));
+function toggleMenu(){ document.getElementById("mobileMenu").classList.toggle("open"); }
+
+const session = DB.getSession();
+const userNav = document.getElementById("userNavItem");
+if (session) {
+  userNav.innerHTML = `<a href="profile.html" style="color:var(--accent);font-weight:700;padding:8px 16px;border-radius:8px;text-decoration:none">👤 ${session.name}</a>`;
+  if (session.role === "admin") {
+    document.getElementById("adminNavItem").innerHTML = `<a href="admin.html" class="nav-admin">⚙ الإدارة</a>`;
+    document.getElementById("adminMobileItem").innerHTML = `<a href="admin.html">الإدارة</a>`;
+  }
+} else {
+  userNav.innerHTML = `<a href="login.html" style="color:var(--muted);padding:8px 16px;border-radius:8px;text-decoration:none">تسجيل الدخول</a>`;
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>

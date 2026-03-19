@@ -1,0 +1,171 @@
+{
+  "1": [
+    {
+      "id": "notif_chat_1773779693846",
+      "type": "system",
+      "icon": "💬",
+      "title": "رسالة جديدة من Baraa Saleh",
+      "body": "مرحبا",
+      "link": "chat.html?id=chat_1773779674034_vk8j",
+      "read": true,
+      "createdAt": "2026-03-17T20:34:53.846Z"
+    },
+    {
+      "id": "notif_chat_1773779614975",
+      "type": "system",
+      "icon": "💬",
+      "title": "رسالة جديدة من المدير",
+      "body": "مرحبا",
+      "link": "chat.html?id=chat_1773779595252_oqh3",
+      "read": true,
+      "createdAt": "2026-03-17T20:33:34.975Z"
+    },
+    {
+      "id": "notif_chat_1773779606633",
+      "type": "system",
+      "icon": "💬",
+      "title": "رسالة جديدة من المدير",
+      "body": "ff",
+      "link": "chat.html?id=chat_1773779595252_oqh3",
+      "read": true,
+      "createdAt": "2026-03-17T20:33:26.633Z"
+    },
+    {
+      "id": "notif_chat_1773779600826",
+      "type": "system",
+      "icon": "💬",
+      "title": "رسالة جديدة من المدير",
+      "body": "sdcsdc",
+      "link": "chat.html?id=chat_1773779595252_oqh3",
+      "read": true,
+      "createdAt": "2026-03-17T20:33:20.826Z"
+    }
+  ],
+  "1773677802989": [
+    {
+      "id": "srv_1773678740503",
+      "type": "system",
+      "title": "update",
+      "body": "هناك تحديث اليوم فس الساعة 12 ظهرا update 1.0",
+      "icon": "⚙️",
+      "read": false,
+      "createdAt": "2026-03-16T16:32:20.503Z"
+    },
+    {
+      "id": "srv_1773678016332",
+      "type": "system",
+      "title": "update",
+      "body": "هناك تحديث في الساعة 12 ظهرا",
+      "icon": "⚙️",
+      "read": false,
+      "createdAt": "2026-03-16T16:20:16.332Z"
+    }
+  ],
+  "1773689301450": [
+    {
+      "id": "srv_1773690141676",
+      "type": "promo",
+      "title": "ً",
+      "body": "ً",
+      "icon": "🎁",
+      "read": false,
+      "createdAt": "2026-03-16T19:42:21.676Z"
+    },
+    {
+      "id": "srv_1773690108446",
+      "type": "promo",
+      "title": "خصم 30% 🔥",
+      "body": "على المنازل",
+      "icon": "🎁",
+      "read": true,
+      "createdAt": "2026-03-16T19:41:48.446Z"
+    }
+  ],
+  "1773691446337": [
+    {
+      "id": "notif_chat_1773780183908",
+      "type": "system",
+      "icon": "💬",
+      "title": "رسالة جديدة من المدير",
+      "body": "3tr43",
+      "link": "chat.html?id=chat_1773779674034_vk8j",
+      "read": true,
+      "createdAt": "2026-03-17T20:43:03.908Z"
+    },
+    {
+      "id": "notif_chat_1773779709356",
+      "type": "system",
+      "icon": "💬",
+      "title": "رسالة جديدة من المدير",
+      "body": "هلا",
+      "link": "chat.html?id=chat_1773779674034_vk8j",
+      "read": true,
+      "createdAt": "2026-03-17T20:35:09.356Z"
+    },
+    {
+      "id": "srv_1773777280297",
+      "type": "promo",
+      "title": "sferf",
+      "body": "erfef",
+      "icon": "🎁",
+      "read": true,
+      "createdAt": "2026-03-17T19:54:40.297Z"
+    },
+    {
+      "id": "srv_1773776419779",
+      "type": "promo",
+      "title": "efewfef",
+      "body": "dfvdfv",
+      "icon": "🎁",
+      "read": true,
+      "createdAt": "2026-03-17T19:40:19.779Z"
+    },
+    {
+      "id": "srv_1773775898822",
+      "type": "promo",
+      "title": "sdsd",
+      "body": "wefwfewef",
+      "icon": "🎁",
+      "read": true,
+      "createdAt": "2026-03-17T19:31:38.822Z"
+    },
+    {
+      "id": "srv_1773775877431",
+      "type": "promo",
+      "title": "dfdve",
+      "body": "efvevf",
+      "icon": "🎁",
+      "read": true,
+      "createdAt": "2026-03-17T19:31:17.431Z"
+    },
+    {
+      "id": "srv_1773775858623",
+      "type": "promo",
+      "title": "sdcsdc",
+      "body": "sdcsdcsdc",
+      "icon": "🎁",
+      "read": true,
+      "createdAt": "2026-03-17T19:30:58.623Z"
+    }
+  ],
+  "1773783445213": [
+    {
+      "id": "srv_1773826336136",
+      "type": "system",
+      "title": "ة",
+      "body": "م",
+      "icon": "⚙️",
+      "read": false,
+      "createdAt": "2026-03-18T09:32:16.136Z"
+    },
+    {
+      "id": "srv_1773825904987",
+      "type": "promo",
+      "title": "erferf",
+      "body": "ergfer",
+      "icon": "🎁",
+      "read": false,
+      "createdAt": "2026-03-18T09:25:04.987Z"
+    }
+  ]
+}

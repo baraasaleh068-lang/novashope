@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8a96b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NovaShop">
+<title>إتمام الشراء — NovaShop</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="db.js"></script>
+<script src="api.js"></script>
+<script src="store.js"></script>
+<style>
+.checkout-page { max-width: 1000px; margin: 0 auto; padding: 120px 24px 80px; }
+.checkout-page h1 { font-size: 2.2rem; font-weight: 900; margin-bottom: 40px; }
+
+.checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: 32px; }
+
+/* Steps */
+.steps { display: flex; gap: 0; margin-bottom: 32px; }
+.step {
+  flex: 1; display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  background: var(--card); border: 1px solid var(--border);
+  position: relative;
+}
+.step:first-child { border-radius: 12px 0 0 12px; }
+.step:last-child { border-radius: 0 12px 12px 0; }
+.step.active { border-color: var(--accent); background: rgba(200,169,107,0.08); }
+.step.done { border-color: #22c55e; background: rgba(34,197,94,0.06); }
+.step-num {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--bg); border: 2px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+}
+.step.active .step-num { background: var(--accent); border-color: var(--accent); color: white; }
+.step.done .step-num { background: #22c55e; border-color: #22c55e; color: white; }
+.step-label { font-size: 0.9rem; font-weight: 600; }
+.step-sub { font-size: 0.75rem; color: var(--muted); }
+
+/* Sections */
+.checkout-section {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px; margin-bottom: 20px;
+}
+.checkout-section h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.checkout-field { display: flex; flex-direction: column; gap: 8px; }
+.checkout-field.full { grid-column: 1/-1; }
+.checkout-field label { font-size: 0.82rem; font-weight: 600; color: var(--muted); }
+.checkout-field input, .checkout-field select, .checkout-field textarea {
+  background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 12px 14px;
+  border-radius: 10px; font-family: 'Tajawal', sans-serif;
+  font-size: 0.92rem; outline: none; transition: border-color 0.2s;
+  width: 100%;
+}
+.checkout-field input:focus, .checkout-field select:focus { border-color: var(--accent); }
+.checkout-field input::placeholder { color: var(--muted); }
+.checkout-field textarea { resize: vertical; min-height: 80px; }
+
+/* Payment Methods */
+.pay-methods { display: flex; flex-direction: column; gap: 12px; }
+.pay-method {
+  display: flex; align-items: center; gap: 16px;
+  padding: 16px 20px; border-radius: 12px;
+  border: 2px solid var(--border); cursor: pointer;
+  transition: all 0.2s; background: var(--bg);
+}
+.pay-method:hover { border-color: var(--accent); background: rgba(200,169,107,0.05); }
+.pay-method.selected { border-color: var(--accent); background: rgba(200,169,107,0.1); }
+.pay-method input[type="radio"] { display: none; }
+.pay-icon { font-size: 2rem; flex-shrink: 0; }
+.pay-info { flex: 1; }
+.pay-name { font-weight: 700; font-size: 0.95rem; }
+.pay-desc { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+.pay-badge {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white; font-size: 0.7rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 50px;
+}
+
+/* ClickPay Instructions */
+.clickpay-box {
+  display: none;
+  background: linear-gradient(135deg, rgba(200,169,107,0.1), rgba(154,118,64,0.1));
+  border: 1px solid rgba(200,169,107,0.3);
+  border-radius: 12px; padding: 20px; margin-top: 16px;
+}
+.clickpay-box.show { display: block; animation: fadeInUp 0.3s ease; }
+.clickpay-number {
+  font-family: 'DM Mono', monospace;
+  font-size: 1.4rem; font-weight: 700;
+  color: var(--accent); text-align: center;
+  padding: 14px; background: var(--bg);
+  border-radius: 10px; margin: 12px 0;
+  border: 1px dashed var(--accent); letter-spacing: 2px;
+  cursor: pointer; transition: background 0.2s;
+}
+.clickpay-number:hover { background: rgba(200,169,107,0.1); }
+.clickpay-steps { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.clickpay-steps li {
+  display: flex; align-items: flex-start; gap: 12px;
+  font-size: 0.88rem; color: var(--muted);
+}
+.clickpay-steps li span.num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent); color: white;
+  font-size: 0.75rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 1px;
+}
+.ref-input-wrap { margin-top: 16px; }
+.ref-input-wrap label { font-size: 0.82rem; font-weight: 600; color: var(--text); display: block; margin-bottom: 8px; }
+.ref-input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  color: var(--text); padding: 12px 14px; border-radius: 10px;
+  font-family: 'DM Mono', monospace; font-size: 0.95rem;
+  outline: none; transition: border-color 0.2s;
+}
+.ref-input:focus { border-color: var(--accent); }
+.ref-input::placeholder { color: var(--muted); font-family: 'Tajawal', sans-serif; }
+
+/* Order Summary sidebar */
+.order-summary {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px;
+  position: sticky; top: 100px; height: fit-content;
+}
+.order-summary h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
+.summary-items { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+.summary-item { display: flex; align-items: center; gap: 12px; }
+.summary-item img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; }
+.summary-item-info { flex: 1; }
+.summary-item-name { font-size: 0.85rem; font-weight: 600; }
+.summary-item-price { color: var(--accent); font-family: 'DM Mono', monospace; font-size: 0.85rem; }
+.summary-divider { height: 1px; background: var(--border); margin: 16px 0; }
+.summary-row { display: flex; justify-content: space-between; font-size: 0.88rem; color: var(--muted); margin-bottom: 8px; }
+.summary-row.total { color: var(--text); font-weight: 800; font-size: 1.05rem; margin-top: 8px; }
+.summary-row.total span:last-child { color: var(--accent); font-family: 'DM Mono', monospace; }
+
+.place-order-btn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: white; border: none; border-radius: 12px;
+  font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  font-family: 'Tajawal', sans-serif; margin-top: 20px;
+  transition: all 0.3s; box-shadow: 0 8px 25px rgba(200,169,107,0.3);
+}
+.place-order-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(200,169,107,0.5); }
+.place-order-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* Success Screen */
+.success-screen {
+  display: none; text-align: center; padding: 60px 24px;
+}
+.success-screen.show { display: block; animation: fadeInUp 0.5s ease; }
+.success-icon { font-size: 5rem; margin-bottom: 20px; }
+.success-screen h2 { font-size: 2rem; font-weight: 900; margin-bottom: 12px; }
+.success-screen p { color: var(--muted); margin-bottom: 8px; }
+.order-id-badge {
+  display: inline-block; background: rgba(200,169,107,0.1);
+  border: 1px solid var(--accent); color: var(--accent);
+  padding: 8px 24px; border-radius: 50px;
+  font-family: 'DM Mono', monospace; font-weight: 700;
+  margin: 16px 0 24px;
+}
+.pending-notice {
+  background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+  color: var(--gold); padding: 16px 20px; border-radius: 12px;
+  font-size: 0.9rem; max-width: 500px; margin: 0 auto 24px;
+  line-height: 1.7;
+}
+
+@media(max-width: 768px) {
+  .checkout-grid { grid-template-columns: 1fr; }
+  .steps { flex-direction: column; gap: 8px; }
+  .step { border-radius: 12px !important; }
+  .field-row { grid-template-columns: 1fr; }
+}
+</style>
+<script src="notifications.js" defer></script>
+</head>
+<body>
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<header id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">◈</span>
+      <span>Nova<strong>Shop</strong></span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="products.html">المنتجات</a>
+      <a href="chat.html">💬 الدعم</a>
+      <a href="cart.html" class="cart-link">السلة<span class="cart-badge" id="cartCount">0</span></a>
+    </nav>
+    <button class="notif-btn notif-btn-mobile" onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifToggleMobile" style="display:none;position:relative;background:rgba(200,169,107,0.08);border:1px solid rgba(200,169,107,0.2);border-radius:10px;padding:7px 10px;cursor:pointer;align-items:center;gap:4px;color:#94a3b8;font-size:1rem;">🔔<span class="notif-badge" style="display:none">0</span></button><button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">الرئيسية</a>
+    <a href="products.html">المنتجات</a>
+    <a href="chat.html">💬 الدعم</a>
+    <a href="cart.html">السلة</a>
+  
+    <button onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifMobileMenuBtn" style="display:none;background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:1rem;padding:14px 28px;text-align:right;width:100%;cursor:pointer;border-bottom:1px solid var(--border);">🔔 الإشعارات <span id="notifMobileCount" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-right:4px;display:none">0</span></button></div>
+</header>
+
+<div class="checkout-page">
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step done" id="step1">
+      <div class="step-num">✓</div>
+      <div><div class="step-label">السلة</div><div class="step-sub">تم مراجعتها</div></div>
+    </div>
+    <div class="step active" id="step2">
+      <div class="step-num">2</div>
+      <div><div class="step-label">معلومات الشحن</div><div class="step-sub">أدخل عنوانك</div></div>
+    </div>
+    <div class="step" id="step3">
+      <div class="step-num">3</div>
+      <div><div class="step-label">الدفع</div><div class="step-sub">اختر طريقة الدفع</div></div>
+    </div>
+    <div class="step" id="step4">
+      <div class="step-num">4</div>
+      <div><div class="step-label">تأكيد الطلب</div><div class="step-sub">في انتظار الموافقة</div></div>
+    </div>
+  </div>
+
+  <!-- Main form + success -->
+  <div id="mainCheckout">
+    <div class="checkout-grid">
+      <!-- Left: Forms -->
+      <div>
+        <!-- Shipping Info -->
+        <div class="checkout-section">
+          <h2>📦 معلومات التوصيل</h2>
+          <div class="field-row">
+            <div class="checkout-field">
+              <label>الاسم الكامل *</label>
+              <input id="shName" placeholder="محمد أحمد">
+            </div>
+            <div class="checkout-field">
+              <label>رقم الهاتف *</label>
+              <input id="shPhone" placeholder="+962 7X XXX XXXX">
+            </div>
+            <div class="checkout-field">
+              <label>المدينة *</label>
+              <input id="shCity" placeholder="عمّان">
+            </div>
+            <div class="checkout-field">
+              <label>المنطقة / الحي</label>
+              <input id="shArea" placeholder="الجبيهة">
+            </div>
+            <div class="checkout-field full">
+              <label>العنوان التفصيلي *</label>
+              <input id="shAddress" placeholder="شارع، بناية، طابق...">
+            </div>
+            <div class="checkout-field full">
+              <label>ملاحظات للتوصيل</label>
+              <textarea id="shNotes" placeholder="أي تعليمات خاصة للمندوب..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Method -->
+        <div class="checkout-section">
+          <h2>💳 طريقة الدفع</h2>
+          <div class="pay-methods">
+
+            <label class="pay-method selected" onclick="selectPay(this, 'clickpay')">
+              <input type="radio" name="pay" value="clickpay" checked>
+              <div class="pay-icon">📲</div>
+              <div class="pay-info">
+                <div class="pay-name">ClickPay — تحويل فوري</div>
+                <div class="pay-desc">حوّل المبلغ على رقم الجوال وأرسل رقم العملية</div>
+              </div>
+              <div class="pay-badge">الأسرع</div>
+            </label>
+
+            <label class="pay-method" onclick="selectPay(this, 'cod')">
+              <input type="radio" name="pay" value="cod">
+              <div class="pay-icon">💵</div>
+              <div class="pay-info">
+                <div class="pay-name">الدفع عند الاستلام</div>
+                <div class="pay-desc">ادفع نقداً عند وصول الطلب — +$2 رسوم</div>
+              </div>
+            </label>
+
+          </div>
+
+          <!-- ClickPay Instructions -->
+          <div class="clickpay-box show" id="clickpayBox">
+            <div style="font-weight:700; margin-bottom:8px; font-size:0.95rem;">📱 خطوات الدفع عبر ClickPay</div>
+            <ol class="clickpay-steps">
+              <li><span class="num">1</span> افتح تطبيق ClickPay أو اتصل *789#</li>
+              <li><span class="num">2</span> اختر "تحويل أموال" ثم أدخل الرقم التالي:</li>
+            </ol>
+            <div class="clickpay-number" onclick="copyNumber()" title="اضغط للنسخ">
+              +962 77 543 7370
+            </div>
+            <ol class="clickpay-steps">
+              <li><span class="num">3</span> أدخل المبلغ المبيّن في ملخص الطلب بالضبط</li>
+              <li><span class="num">4</span> في خانة الملاحظة اكتب: <strong style="color:var(--text)">NOVA + اسمك</strong></li>
+              <li><span class="num">5</span> انسخ رقم العملية (Reference) وضعه أدناه</li>
+            </ol>
+            <div class="ref-input-wrap">
+              <label>رقم عملية التحويل (Reference Number) *</label>
+              <input class="ref-input" id="payRef" placeholder="مثال: TXN1234567890">
+            </div>
+            <div style="margin-top:12px;font-size:0.82rem;color:var(--muted);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);padding:10px 14px;border-radius:8px">
+              ⏳ سيتم مراجعة التحويل خلال <strong style="color:var(--gold)">15-30 دقيقة</strong> وتأكيد طلبك تلقائياً
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right: Summary -->
+      <div>
+        <div class="order-summary">
+          <h3>📋 ملخص الطلب</h3>
+          <div class="summary-items" id="summaryItems"></div>
+          <div class="summary-divider"></div>
+          <div class="summary-row"><span>المجموع</span><span id="sumSubtotal">$0</span></div>
+          <div class="summary-row"><span>الشحن</span><span id="sumShipping">$5</span></div>
+          <div class="summary-row"><span>رسوم الدفع</span><span id="sumFees">$0</span></div>
+          <div class="summary-row total"><span>الإجمالي</span><span id="sumTotal">$0</span></div>
+          <button class="place-order-btn" id="placeBtn" onclick="placeOrder()">
+            تأكيد الطلب ✓
+          </button>
+          <div style="text-align:center;margin-top:12px;color:var(--muted);font-size:0.8rem">
+            🔒 بياناتك محمية وآمنة
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Success Screen -->
+  <div class="success-screen" id="successScreen">
+    <div class="success-icon">🎉</div>
+    <h2>تم استلام طلبك!</h2>
+    <p>رقم طلبك هو:</p>
+    <div class="order-id-badge" id="orderIdBadge">ORD-...</div>
+    <div class="pending-notice">
+      ⏳ طلبك <strong>قيد المراجعة</strong> — سيتم التحقق من تحويل ClickPay
+      وتأكيد الطلب خلال <strong>15-30 دقيقة</strong>.<br>
+      ستصلك رسالة SMS عند تأكيد الطلب.
+    </div>
+    <p style="color:var(--muted);margin-bottom:24px">يمكنك متابعة حالة طلبك من صفحة حسابك</p>
+    <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+      <a href="index.html" class="btn-primary">العودة للرئيسية</a>
+      <a href="profile.html" style="color:var(--muted);text-decoration:none;padding:14px 24px;border:1px solid var(--border);border-radius:10px">
+        طلباتي 📦
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  g.style.left = e.clientX + "px";
+  g.style.top = e.clientY + "px";
+});
+window.addEventListener("scroll", () => {
+  document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 50);
+});
+function toggleMenu(){ document.getElementById("mobileMenu").classList.toggle("open"); }
+
+// Load products
+const allProducts = JSON.parse(localStorage.getItem("products")) || [
+  {id:1,name:"Smart Watch Pro",price:29,image:"https://picsum.photos/300/200?random=1",discount:15},
+  {id:2,name:"Wireless Earbuds",price:25,image:"https://picsum.photos/300/200?random=2",discount:0},
+  {id:3,name:"LED Strip Lights",price:15,image:"https://picsum.photos/300/200?random=3",discount:20},
+];
+
+let selectedPay = "clickpay";
+
+function getCartProducts() {
+  const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  return cart.map(id => allProducts.find(p => p.id === id)).filter(Boolean);
+}
+
+function calcTotals(pay) {
+  const items = getCartProducts();
+  const sub = items.reduce((s, p) => s + (p.discount ? p.price*(1-p.discount/100) : p.price), 0);
+  const shipping = sub > 50 ? 0 : 5;
+  const fees = pay === "cod" ? 2 : 0;
+  return { sub, shipping, fees, total: sub + shipping + fees, items };
+}
+
+function renderSummary() {
+  const { sub, shipping, fees, total, items } = calcTotals(selectedPay);
+
+  if (items.length === 0) { window.location.href = "cart.html"; return; }
+
+  const container = document.getElementById("summaryItems");
+  container.innerHTML = "";
+  items.forEach(p => {
+    const fp = p.discount ? (p.price*(1-p.discount/100)).toFixed(2) : p.price;
+    container.innerHTML += `
+      <div class="summary-item">
+        <img src="${p.image}" alt="${p.name}">
+        <div class="summary-item-info">
+          <div class="summary-item-name">${p.name}</div>
+          <div class="summary-item-price">$${fp}</div>
+        </div>
+      </div>`;
+  });
+
+  document.getElementById("sumSubtotal").textContent = "$" + sub.toFixed(2);
+  document.getElementById("sumShipping").textContent = shipping === 0 ? "مجاني 🎁" : "$" + shipping;
+  document.getElementById("sumFees").textContent = fees > 0 ? "$" + fees : "لا يوجد";
+  document.getElementById("sumTotal").textContent = "$" + total.toFixed(2);
+  document.getElementById("cartCount").textContent = items.length;
+}
+
+function selectPay(label, method) {
+  document.querySelectorAll(".pay-method").forEach(l => l.classList.remove("selected"));
+  label.classList.add("selected");
+  selectedPay = method;
+  document.getElementById("clickpayBox").classList.toggle("show", method === "clickpay");
+  renderSummary();
+}
+
+function copyNumber() {
+  navigator.clipboard.writeText("+96277543737");
+  showToast("📋 تم نسخ الرقم!");
+}
+
+async function placeOrder() {
+  const name    = document.getElementById("shName").value.trim();
+  const phone   = document.getElementById("shPhone").value.trim();
+  const city    = document.getElementById("shCity").value.trim();
+  const address = document.getElementById("shAddress").value.trim();
+
+  if (!name || !phone || !city || !address) {
+    showToast("⚠️ يرجى تعبئة بيانات التوصيل كاملة"); return;
+  }
+  if (selectedPay === "clickpay") {
+    const ref = document.getElementById("payRef").value.trim();
+    if (!ref) { showToast("⚠️ أدخل رقم عملية التحويل من ClickPay"); return; }
+  }
+
+  const btn = document.getElementById("placeBtn");
+  btn.disabled = true;
+  btn.textContent = "⏳ جاري معالجة الطلب...";
+
+  const session = DB.getSession();
+  const userId  = session ? session.id : 0;
+  const { total, items } = calcTotals(selectedPay);
+  const ref = selectedPay === "clickpay"
+    ? document.getElementById("payRef").value.trim()
+    : "COD-" + Date.now();
+
+  let orderId = "ORD-" + Date.now();
+
+  // حفظ في السيرفر
+  try {
+    const token  = localStorage.getItem("ns_token") || "";
+    const origin = window.location.origin.startsWith("file") ? "http://localhost:3001" : window.location.origin;
+    const sres = await fetch(origin + "/api/orders/create", {
+      method: "POST",
+      headers: {"Content-Type":"application/json", "Authorization":"Bearer "+token},
+      body: JSON.stringify({ items: items.map(p=>p.id), total, paymentRef: ref }),
+      signal: AbortSignal.timeout(8000)
+    }).then(r => r.json());
+    if (sres.ok && sres.order) {
+      orderId = sres.order.id;
+      console.log("✅ الطلب حُفظ في السيرفر:", orderId);
+    }
+  } catch(e) {
+    console.warn("⚠️ حفظ محلي:", e.message);
+  }
+
+  // حفظ محلي دائماً كـ backup
+  DB.createOrder(userId, items.map(p=>p.id), total, ref);
+  localStorage.removeItem("cart");
+
+  // إشعار للمستخدم
+  if (typeof NS_Notifications !== "undefined") {
+    NS_Notifications.notifyOrderPlaced(orderId);
+  }
+
+  // Show success
+  btn.disabled = false;
+  document.getElementById("mainCheckout").style.display = "none";
+  document.getElementById("successScreen").classList.add("show");
+  document.getElementById("orderIdBadge").textContent = orderId;
+
+  document.getElementById("step2").classList.remove("active");
+  document.getElementById("step2").classList.add("done");
+  document.getElementById("step2").querySelector(".step-num").textContent = "✓";
+  document.getElementById("step3").classList.add("done");
+  document.getElementById("step3").querySelector(".step-num").textContent = "✓";
+  document.getElementById("step4").classList.add("active");
+}
+
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+document.addEventListener("DOMContentLoaded", renderSummary);
+</script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+{
+  "1": [
+    {
+      "id": "sess_1773827561640_2ys2g",
+      "tokenHash": "85c653b9b9069ade",
+      "deviceType": "desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "ip": "::1",
+      "createdAt": "2026-03-18T09:52:41.641Z",
+      "lastActive": "2026-03-18T09:52:41.641Z",
+      "current": false
+    },
+    {
+      "id": "sess_1773825132954_eij96",
+      "tokenHash": "4d823ef2d3c5ad6f",
+      "deviceType": "desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "ip": "::1",
+      "createdAt": "2026-03-18T09:12:12.954Z",
+      "lastActive": "2026-03-18T09:12:12.954Z",
+      "current": false
+    }
+  ],
+  "1773691446337": [
+    {
+      "id": "sess_1773782489926_2wjdj",
+      "tokenHash": "2d413efafa771338",
+      "deviceType": "desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "ip": "::1",
+      "createdAt": "2026-03-17T21:21:29.927Z",
+      "lastActive": "2026-03-17T21:21:29.927Z",
+      "current": false
+    },
+    {
+      "id": "sess_1773782373876_oz9fl",
+      "tokenHash": "ec0e3fcf4c373349",
+      "deviceType": "mobile",
+      "browser": "Safari",
+      "os": "Mac OS",
+      "ip": "::ffff:192.168.1.5",
+      "createdAt": "2026-03-17T21:19:33.876Z",
+      "lastActive": "2026-03-17T21:19:33.876Z",
+      "current": false
+    },
+    {
+      "id": "sess_1773782179445_6lihs",
+      "tokenHash": "8e9b183c2206cbd7",
+      "deviceType": "mobile",
+      "browser": "Safari",
+      "os": "Mac OS",
+      "ip": "::ffff:192.168.1.5",
+      "createdAt": "2026-03-17T21:16:19.445Z",
+      "lastActive": "2026-03-17T21:16:19.445Z",
+      "current": false
+    }
+  ],
+  "1773783445213": [
+    {
+      "id": "sess_1773783476381_ixbf3",
+      "tokenHash": "513d535faf4d5f43",
+      "deviceType": "desktop",
+      "browser": "Chrome",
+      "os": "Windows",
+      "ip": "::1",
+      "createdAt": "2026-03-17T21:37:56.382Z",
+      "lastActive": "2026-03-17T21:37:56.382Z",
+      "current": false
+    }
+  ],
+  "1773827447163": [
+    {
+      "id": "sess_1773827447173_upr34",
+      "tokenHash": "ca49b636ac90b3e0",
+      "deviceType": "mobile",
+      "browser": "Safari",
+      "os": "Mac OS",
+      "ip": "::ffff:192.168.1.2",
+      "createdAt": "2026-03-18T09:50:47.174Z",
+      "lastActive": "2026-03-18T09:50:47.174Z",
+      "current": false
+    }
+  ],
+  "1773827695583": [
+    {
+      "id": "sess_1773827798713_vseud",
+      "tokenHash": "4c37559b924605ff",
+      "deviceType": "mobile",
+      "browser": "Safari",
+      "os": "Mac OS",
+      "ip": "::ffff:192.168.1.2",
+      "createdAt": "2026-03-18T09:56:38.713Z",
+      "lastActive": "2026-03-18T09:56:38.713Z",
+      "current": false
+    },
+    {
+      "id": "sess_1773827695587_57ip3",
+      "tokenHash": "60ee9bf5b010842f",
+      "deviceType": "mobile",
+      "browser": "Safari",
+      "os": "Mac OS",
+      "ip": "::ffff:192.168.1.2",
+      "createdAt": "2026-03-18T09:54:55.588Z",
+      "lastActive": "2026-03-18T09:54:55.588Z",
+      "current": false
+    }
+  ]
+}

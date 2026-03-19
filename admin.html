@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة الإدارة — NovaShop</title>
+<link rel="stylesheet" href="styles.css?v=3">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="db.js"></script>
+<script src="api.js"></script>
+<script src="notifications.js" defer></script>
+<style>
+.blocked-screen {
+  display:none; min-height:100vh; align-items:center; justify-content:center;
+  flex-direction:column; text-align:center; padding:40px;
+  position:fixed; inset:0; z-index:9999; background:var(--bg);
+}
+.blocked-screen.show { display:flex; }
+.blocked-icon { font-size:5rem; margin-bottom:20px; }
+.blocked-screen h2 { font-size:1.8rem; font-weight:900; margin-bottom:10px; }
+.blocked-screen > p { color:var(--muted); max-width:380px; margin-bottom:24px; line-height:1.7; }
+.blocked-badge {
+  background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+  color:#ef4444; padding:6px 18px; border-radius:50px;
+  font-size:0.82rem; font-weight:700; margin-bottom:20px; display:inline-block;
+}
+.admin-login-form {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:28px; width:100%; max-width:380px;
+}
+.admin-login-form h3 { font-size:1.05rem; font-weight:700; margin-bottom:18px; }
+.a-field { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
+.a-field label { font-size:0.8rem; font-weight:600; color:var(--muted); }
+.a-field input {
+  background:var(--bg); border:1px solid var(--border);
+  color:var(--text); padding:11px 14px; border-radius:10px;
+  font-family:'Tajawal',sans-serif; font-size:0.92rem;
+  outline:none; transition:border-color 0.2s; width:100%; box-sizing:border-box;
+}
+.a-field input:focus { border-color:var(--accent); }
+.a-login-btn {
+  width:100%; padding:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:white; border:none; border-radius:10px;
+  font-size:0.95rem; font-weight:700; cursor:pointer;
+  font-family:'Tajawal',sans-serif; margin-top:6px; transition:opacity 0.2s;
+}
+.a-login-btn:hover { opacity:0.9; }
+.a-error {
+  display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+  color:#ef4444; padding:10px 14px; border-radius:9px;
+  font-size:0.85rem; margin-bottom:10px;
+}
+.a-error.show { display:block; }
+.admin-hint { font-size:0.76rem; color:var(--muted); text-align:center; margin-top:12px; }
+.admin-hint code { background:var(--bg); padding:2px 6px; border-radius:4px; font-family:'DM Mono',monospace; color:var(--accent); }
+
+#adminContent { display:none; }
+#adminContent.show { display:block; }
+
+.admin-nav {
+  display:flex; gap:8px; margin-bottom:28px;
+  border-bottom:1px solid var(--border); padding-bottom:16px; flex-wrap:wrap;
+}
+.admin-nav-btn {
+  padding:9px 22px; border-radius:10px; border:1px solid var(--border);
+  background:none; color:var(--muted); cursor:pointer;
+  font-family:'Tajawal',sans-serif; font-size:0.92rem; font-weight:600; transition:all 0.2s;
+}
+.admin-nav-btn.active { background:var(--accent); color:white; border-color:var(--accent); }
+.admin-nav-btn:hover:not(.active) { border-color:var(--accent); color:var(--accent); }
+.admin-tab-panel { display:none; }
+.admin-tab-panel.active { display:block; animation:fadeInUp 0.2s ease; }
+
+.order-admin-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:22px; margin-bottom:14px; transition:border-color 0.2s;
+}
+.order-admin-card:hover { border-color:rgba(200,169,107,0.4); }
+.order-top-row { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; gap:12px; flex-wrap:wrap; }
+.order-id-txt { font-family:'DM Mono',monospace; font-size:0.92rem; color:var(--accent); font-weight:700; }
+.order-meta-txt { color:var(--muted); font-size:0.8rem; margin-top:3px; }
+.order-info-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:10px; margin-bottom:14px; background:var(--bg); border-radius:10px; padding:14px;
+}
+.order-info-cell { display:flex; flex-direction:column; gap:3px; }
+.order-info-cell span { color:var(--muted); font-size:0.76rem; }
+.order-info-cell strong { font-size:0.9rem; }
+.order-actions { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+.btn-confirm { padding:9px 18px; border-radius:9px; border:none; cursor:pointer; background:linear-gradient(135deg,#22c55e,#16a34a); color:white; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.88rem; }
+.btn-reject  { padding:9px 18px; border-radius:9px; cursor:pointer; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); color:#ef4444; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.88rem; }
+.btn-ship    { padding:9px 18px; border-radius:9px; border:none; cursor:pointer; background:linear-gradient(135deg,#b5703a,#9a7640); color:white; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.88rem; }
+.btn-deliver { padding:9px 18px; border-radius:9px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--accent),var(--accent2)); color:white; font-family:'Tajawal',sans-serif; font-weight:700; font-size:0.88rem; }
+.btn-danger  { padding:8px 14px; border-radius:8px; cursor:pointer; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); color:#ef4444; font-family:'Tajawal',sans-serif; font-size:0.8rem; font-weight:600; }
+.btn-warning { padding:8px 14px; border-radius:8px; cursor:pointer; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.4); color:#f59e0b; font-family:'Tajawal',sans-serif; font-size:0.8rem; font-weight:600; }
+.btn-info    { padding:8px 14px; border-radius:8px; cursor:pointer; background:rgba(200,169,107,0.1); border:1px solid rgba(200,169,107,0.4); color:var(--accent); font-family:'Tajawal',sans-serif; font-size:0.8rem; font-weight:600; }
+
+.sbadge { padding:4px 12px; border-radius:50px; font-size:0.78rem; font-weight:700; }
+.s-pending   { background:rgba(245,158,11,0.1); color:#f59e0b; border:1px solid rgba(245,158,11,0.3); }
+.s-confirmed { background:rgba(34,197,94,0.1);  color:#22c55e; border:1px solid rgba(34,197,94,0.3); }
+.s-shipped   { background:rgba(181,112,58,0.1);  color:#b5703a; border:1px solid rgba(181,112,58,0.3); }
+.s-delivered { background:rgba(200,169,107,0.1); color:#c8a96b; border:1px solid rgba(200,169,107,0.3); }
+.s-rejected  { background:rgba(239,68,68,0.1);  color:#ef4444; border:1px solid rgba(239,68,68,0.3); }
+.s-banned    { background:rgba(239,68,68,0.15); color:#ef4444; border:1px solid rgba(239,68,68,0.5); }
+
+.user-row {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:18px; display:flex; align-items:center;
+  gap:16px; margin-bottom:12px; flex-wrap:wrap; transition:border-color 0.2s;
+}
+.user-row:hover { border-color:var(--accent); }
+.user-row.banned-row { border-color:rgba(239,68,68,0.4); opacity:0.8; }
+.u-avatar {
+  width:46px; height:46px; border-radius:50%; flex-shrink:0;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.2rem; font-weight:700; color:white;
+}
+.u-info { flex:1; min-width:140px; }
+.u-name { font-weight:700; font-size:0.95rem; }
+.u-email { color:var(--muted); font-size:0.82rem; margin-top:2px; }
+.u-stats { display:flex; gap:24px; }
+.u-stat { text-align:center; }
+.u-stat div { font-weight:800; font-size:1rem; }
+.u-stat small { color:var(--muted); font-size:0.75rem; }
+.u-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:32px; }
+@media(max-width:640px) { .stats-grid { grid-template-columns:repeat(2,1fr); } }
+
+.empty-msg { text-align:center; padding:60px; color:var(--muted); }
+.empty-msg .ei { font-size:3rem; margin-bottom:12px; }
+
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:9000;
+  background:rgba(0,0,0,0.7); align-items:center; justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal-box {
+  background:var(--card); border:1px solid var(--border); border-radius:16px;
+  padding:28px; width:100%; max-width:480px; max-height:80vh; overflow-y:auto;
+}
+.modal-box h3 { font-size:1.1rem; font-weight:800; margin-bottom:16px; }
+.modal-close { float:left; background:none; border:none; color:var(--muted); cursor:pointer; font-size:1.2rem; }
+.order-mini-card {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:10px; padding:12px 14px; margin-bottom:10px;
+}
+.toolbar { display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; align-items:center; }
+.toolbar input, .toolbar select {
+  padding:9px 14px; border-radius:8px; border:1px solid var(--border);
+  background:var(--bg); color:var(--text); font-family:'Tajawal',sans-serif; font-size:0.9rem;
+}
+.toolbar input { flex:1; min-width:200px; }
+.toolbar button {
+  padding:9px 14px; border-radius:8px; border:1px solid var(--border);
+  background:none; color:var(--accent); cursor:pointer; font-size:1rem; flex-shrink:0;
+}
+</style>
+</head>
+<body>
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- شاشة الحماية -->
+<div class="blocked-screen" id="blockedScreen">
+  <div class="blocked-icon">🔒</div>
+  <div class="blocked-badge">محتوى مقيّد — للمدير فقط</div>
+  <h2>لوحة الإدارة</h2>
+  <p>هذه الصفحة للمدير فقط. سجّل دخولك بحساب الأدمن للمتابعة.</p>
+  <div class="admin-login-form">
+    <h3>🔐 دخول المدير</h3>
+    <div id="loginErr" class="a-error"></div>
+    <div class="a-field">
+      <label>البريد الإلكتروني</label>
+      <input type="email" id="loginEmail" placeholder="baraasaleh079@icloud.com">
+    </div>
+    <div class="a-field">
+      <label>كلمة المرور</label>
+      <input type="password" id="loginPass" placeholder="••••••"
+             onkeydown="if(event.key==='Enter') doAdminLogin()">
+    </div>
+    <button class="a-login-btn" id="adminLoginBtn" onclick="doAdminLogin()">دخول لوحة الإدارة ←</button>
+    <div class="admin-hint">
+      البيانات الافتراضية: <code><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6f0d0e1d0e0e1c0e030a075f58562f060c03001a0b410c0002">[email&#160;protected]</a></code> / <code>omar2005</code>
+    </div>
+    <div style="text-align:center;margin-top:14px">
+      <a href="index.html" style="color:var(--muted);font-size:0.85rem;text-decoration:none">← العودة للمتجر</a>
+    </div>
+  </div>
+</div>
+
+<!-- الهيدر -->
+<header id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo"><span class="logo-icon">◈</span><span>Nova<strong>Shop</strong></span></a>
+    <nav class="nav-links">
+      <a href="index.html">الرئيسية</a>
+      <a href="products.html">المنتجات</a>
+      <a href="cart.html" class="cart-link">السلة<span class="cart-badge" id="cartCount">0</span></a>
+      <a href="admin.html" class="nav-admin active" id="adminNavLink" style="display:none">⚙ الإدارة</a>
+    </nav>
+    <button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">الرئيسية</a>
+    <a href="products.html">المنتجات</a>
+    <a href="cart.html">السلة</a>
+  </div>
+</header>
+
+<!-- محتوى الإدارة -->
+<div id="adminContent">
+  <div class="admin-wrapper">
+
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px">
+      <div>
+        <h1>⚙ لوحة الإدارة</h1>
+        <p style="color:var(--muted);margin-top:4px" id="welcomeMsg"></p>
+      </div>
+      <button onclick="doAdminLogout()"
+        style="padding:9px 18px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:#ef4444;border-radius:9px;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.88rem">
+        خروج ↩
+      </button>
+    </div>
+
+    <!-- إحصائيات -->
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <!-- تبويبات -->
+    <div class="admin-nav">
+      <button class="admin-nav-btn active" onclick="switchTab('products',this)">📦 المنتجات</button>
+      <button class="admin-nav-btn" onclick="switchTab('orders',this)">🛒 الطلبات</button>
+      <button class="admin-nav-btn" onclick="switchTab('users',this)">👥 المستخدمين</button>
+      <button class="admin-nav-btn" onclick="switchTab('add',this)">➕ إضافة منتج</button>
+      <button class="admin-nav-btn" onclick="switchTab('notifications-send',this)">🔔 إرسال إشعار</button>
+      <button class="admin-nav-btn" onclick="switchTab('analytics',this)">📊 التحليلات</button>
+      <button class="admin-nav-btn" onclick="switchTab('chats',this)">💬 دعم العملاء</button>
+    </div>
+
+    <!-- تبويب المنتجات -->
+    <div class="admin-tab-panel active" id="panel-products">
+      <div id="productsGrid" class="admin-products-grid"></div>
+    </div>
+
+    <!-- تبويب الطلبات -->
+    <div class="admin-tab-panel" id="panel-orders">
+      <div class="toolbar">
+        <input id="orderSearch" placeholder="🔍 بحث برقم الطلب أو اسم العميل" onkeyup="filterOrders()">
+        <select id="orderStatusFilter" onchange="filterOrders()">
+          <option value="all">كل الحالات</option>
+          <option value="pending">⏳ قيد المراجعة</option>
+          <option value="confirmed">✅ مؤكد</option>
+          <option value="shipped">🚚 تم الشحن</option>
+          <option value="delivered">📦 تم التسليم</option>
+          <option value="rejected">❌ مرفوض</option>
+        </select>
+        <button onclick="renderOrders()" title="تحديث">🔄</button>
+      </div>
+      <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:0.88rem;color:#f59e0b">
+        📲 تحقق من ClickPay على رقم <strong dir="ltr">+96277543737</strong> قبل قبول الطلبات
+      </div>
+      <div id="ordersContainer"></div>
+    </div>
+
+    <!-- تبويب المستخدمين -->
+    <div class="admin-tab-panel" id="panel-users">
+      <div class="toolbar">
+        <input id="userSearch" placeholder="🔍 البحث بالاسم أو البريد" onkeyup="filterUsers()">
+        <select id="userStatusFilter" onchange="filterUsers()">
+          <option value="all">كل المستخدمين</option>
+          <option value="active">✅ نشط</option>
+          <option value="banned">🚫 محظور</option>
+        </select>
+        <button onclick="renderUsers()" title="تحديث">🔄</button>
+      </div>
+      <div id="usersContainer"></div>
+    </div>
+
+    <!-- تبويب إضافة منتج -->
+    <div class="admin-tab-panel" id="panel-add">
+      <div class="admin-form-card">
+        <h2>➕ إضافة منتج جديد</h2>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>اسم المنتج *</label>
+            <input id="pName" placeholder="مثال: ساعة ذكية Pro">
+          </div>
+          <div class="form-field">
+            <label>السعر ($) *</label>
+            <input id="pPrice" type="number" placeholder="29.99" min="0">
+          </div>
+          <div class="form-field full">
+            <label>رابط الصورة</label>
+            <input id="pImage" placeholder="https://... (فارغ = تلقائي)">
+          </div>
+          <div class="form-field">
+            <label>الفئة</label>
+            <select id="pCategory">
+              <option value="tech">📱 تقنية</option>
+              <option value="audio">🎧 صوتيات</option>
+              <option value="home">🏠 منزل</option>
+              <option value="fashion">👟 أزياء</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>الخصم (%)</label>
+            <input id="pDiscount" type="number" placeholder="0" min="0" max="100">
+          </div>
+        </div>
+        <button class="add-btn" onclick="addProduct()">➕ إضافة المنتج</button>
+      </div>
+    </div>
+
+
+    <!-- ===== PANEL: SEND NOTIFICATION ===== -->
+    <div class="admin-tab-panel" id="panel-notifications-send">
+      <div class="admin-form-card">
+        <h2>🔔 إرسال إشعار للمستخدمين</h2>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>المستلم</label>
+            <select id="notifTarget">
+              <option value="all">جميع المستخدمين</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>نوع الإشعار</label>
+            <select id="notifType">
+              <option value="promo">🎁 عرض خاص</option>
+              <option value="system">⚙️ إشعار نظام</option>
+              <option value="shipping">🚚 شحن</option>
+              <option value="order">🛒 طلب</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label>عنوان الإشعار</label>
+            <input type="text" id="notifTitle" placeholder="مثال: عرض اليوم — خصم 30% 🔥">
+          </div>
+          <div class="form-field full">
+            <label>نص الإشعار</label>
+            <input type="text" id="notifBody" placeholder="تفاصيل الإشعار...">
+          </div>
+        </div>
+        <button class="add-btn" onclick="sendBroadcastNotif()">🚀 إرسال الإشعار</button>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-top:20px">
+        <h3 style="font-weight:700;margin-bottom:12px">💡 ملاحظات</h3>
+        <p style="color:var(--muted2);font-size:0.88rem;line-height:1.9">
+          • الإشعارات تظهر فوراً للمستخدمين عند زيارتهم الموقع<br>
+          • استخدم الإشعارات للعروض والتحديثات المهمة<br>
+          • تغيير حالة الطلب يرسل إشعاراً تلقائياً للمستخدم
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== PANEL: ANALYTICS ===== -->
+    <div class="admin-tab-panel" id="panel-chats">
+      <div class="toolbar">
+        <input id="chatSearch" placeholder="🔍 بحث باسم العميل" onkeyup="filterChats()">
+        <select id="chatStatusFilter" onchange="filterChats()">
+          <option value="all">كل المحادثات</option>
+          <option value="open">🟢 مفتوحة</option>
+          <option value="closed">🔴 مغلقة</option>
+        </select>
+        <button onclick="renderAdminChats()" title="تحديث">🔄</button>
+      </div>
+      <div id="adminChatsContainer">
+        <div class="empty-msg"><div class="ei">💬</div><p>جاري التحميل...</p></div>
+      </div>
+    </div>
+
+    <div class="admin-tab-panel" id="panel-analytics">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div class="admin-form-card" style="margin:0">
+          <h2 style="margin-bottom:20px">📊 إيرادات آخر 7 أيام</h2>
+          <div id="analyticsRevenue" style="color:var(--muted2);font-size:0.88rem">
+            <div style="text-align:center;padding:40px;color:var(--muted)">🔄 جاري التحميل...</div>
+          </div>
+        </div>
+        <div class="admin-form-card" style="margin:0">
+          <h2 style="margin-bottom:20px">🎯 توزيع حالات الطلبات</h2>
+          <div id="analyticsStatus" style="color:var(--muted2);font-size:0.88rem">
+            <div style="text-align:center;padding:40px;color:var(--muted)">🔄 جاري التحميل...</div>
+          </div>
+        </div>
+      </div>
+      <div class="admin-form-card">
+        <h2 style="margin-bottom:20px">👥 إحصائيات المستخدمين</h2>
+        <div id="analyticsUsers">
+          <div style="text-align:center;padding:40px;color:var(--muted)">🔄 جاري التحميل...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: تعديل منتج -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('editModal')">✕</button>
+    <h3>✏️ تعديل المنتج</h3>
+    <input type="hidden" id="editId">
+    <div class="form-grid" style="margin-top:16px">
+      <div class="form-field"><label>الاسم *</label><input id="editName"></div>
+      <div class="form-field"><label>السعر ($) *</label><input id="editPrice" type="number" min="0"></div>
+      <div class="form-field full"><label>رابط الصورة</label><input id="editImage"></div>
+      <div class="form-field">
+        <label>الفئة</label>
+        <select id="editCategory">
+          <option value="tech">📱 تقنية</option>
+          <option value="audio">🎧 صوتيات</option>
+          <option value="home">🏠 منزل</option>
+          <option value="fashion">👟 أزياء</option>
+        </select>
+      </div>
+      <div class="form-field"><label>الخصم (%)</label><input id="editDiscount" type="number" min="0" max="100"></div>
+    </div>
+    <button class="add-btn" onclick="saveEdit()" style="margin-top:16px">💾 حفظ</button>
+  </div>
+</div>
+
+<!-- Modal: طلبات المستخدم -->
+<div class="modal-overlay" id="ordersModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('ordersModal')">✕</button>
+    <h3 id="ordersModalTitle">طلبات المستخدم</h3>
+    <div id="ordersModalList"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ================================================================
+// DATA
+// ================================================================
+const DEFAULT_PRODUCTS = [
+  {id:1,name:"Smart Watch Pro",  price:29,image:"https://picsum.photos/300/200?random=1",category:"tech", discount:15},
+  {id:2,name:"Wireless Earbuds", price:25,image:"https://picsum.photos/300/200?random=2",category:"audio",discount:0},
+  {id:3,name:"LED Strip Lights", price:15,image:"https://picsum.photos/300/200?random=3",category:"home", discount:20},
+  {id:4,name:"Bluetooth Speaker",price:45,image:"https://picsum.photos/300/200?random=4",category:"audio",discount:10},
+  {id:5,name:"USB-C Hub 7-in-1", price:35,image:"https://picsum.photos/300/200?random=5",category:"tech", discount:0},
+  {id:6,name:"Desk Lamp LED",    price:22,image:"https://picsum.photos/300/200?random=6",category:"home", discount:5},
+];
+let products = JSON.parse(localStorage.getItem("products")) || DEFAULT_PRODUCTS;
+function saveProducts() { localStorage.setItem("products", JSON.stringify(products)); }
+
+const STATUS = {
+  pending:   {text:"⏳ قيد المراجعة",cls:"s-pending"},
+  confirmed: {text:"✅ مؤكد",         cls:"s-confirmed"},
+  shipped:   {text:"🚚 تم الشحن",     cls:"s-shipped"},
+  delivered: {text:"📦 تم التسليم",   cls:"s-delivered"},
+  rejected:  {text:"❌ مرفوض",        cls:"s-rejected"},
+};
+const CAT = {tech:"📱 تقنية",audio:"🎧 صوتيات",home:"🏠 منزل",fashion:"👟 أزياء"};
+
+// ================================================================
+// UTILS
+// ================================================================
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  if (g) { g.style.left = e.clientX + "px"; g.style.top = e.clientY + "px"; }
+});
+window.addEventListener("scroll", () => {
+  document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 50);
+});
+function toggleMenu() { document.getElementById("mobileMenu").classList.toggle("open"); }
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+function getToken() {
+  return localStorage.getItem("ns_token") || localStorage.getItem("token") || "";
+}
+function openModal(id)  { document.getElementById(id).classList.add("show"); }
+function closeModal(id) { document.getElementById(id).classList.remove("show"); }
+
+document.querySelectorAll(".modal-overlay").forEach(m => {
+  m.addEventListener("click", e => { if (e.target === m) m.classList.remove("show"); });
+});
+
+// ================================================================
+// AUTH
+// ================================================================
+window.addEventListener("DOMContentLoaded", () => {
+  const cartEl = document.getElementById("cartCount");
+  if (cartEl) cartEl.textContent = (JSON.parse(localStorage.getItem("cart")) || []).length;
+
+  const session = JSON.parse(localStorage.getItem("ns_session") || "null");
+  if (session && session.role === "admin") {
+    unlockAdmin(session);
+    return;
+  }
+
+  const token = localStorage.getItem("ns_token") || localStorage.getItem("token");
+  if (token) {
+    fetch(window.location.origin + "/api/user/me", {
+      headers: { "Authorization": "Bearer " + token },
+      signal: AbortSignal.timeout(3000)
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok && data.user.role === "admin") {
+        localStorage.setItem("ns_session", JSON.stringify({
+          id: data.user.id, name: data.user.name,
+          email: data.user.email, role: data.user.role
+        }));
+        unlockAdmin(data.user);
+      } else {
+        document.getElementById("blockedScreen").classList.add("show");
+      }
+    })
+    .catch(() => {
+      document.getElementById("blockedScreen").classList.add("show");
+    });
+    return;
+  }
+
+  document.getElementById("blockedScreen").classList.add("show");
+});
+
+async function doAdminLogin() {
+  const email = document.getElementById("loginEmail").value.trim();
+  const pass  = document.getElementById("loginPass").value;
+  const btn   = document.getElementById("adminLoginBtn");
+  if (!email || !pass) { showLoginErr("يرجى تعبئة جميع الحقول"); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = "جاري التحقق..."; }
+
+  let user = null;
+
+  try {
+    const res = await fetch(window.location.origin + "/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: pass }),
+      signal: AbortSignal.timeout(4000)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      if (data.token) localStorage.setItem("ns_token", data.token);
+      user = data.user;
+    } else {
+      if (btn) { btn.disabled = false; btn.textContent = "دخول ←"; }
+      showLoginErr(data.msg || "بيانات غير صحيحة");
+      return;
+    }
+  } catch {
+    const res = DB.loginUser(email, pass);
+    if (!res.ok) {
+      if (btn) { btn.disabled = false; btn.textContent = "دخول ←"; }
+      showLoginErr(res.msg);
+      return;
+    }
+    user = res.user;
+  }
+
+  if (btn) { btn.disabled = false; btn.textContent = "دخول ←"; }
+  if (!user || user.role !== "admin") { showLoginErr("هذا الحساب ليس مدير"); return; }
+
+  localStorage.setItem("ns_session", JSON.stringify({
+    id: user.id, name: user.name, email: user.email, role: user.role
+  }));
+  unlockAdmin(user);
+}
+
+function showLoginErr(msg) {
+  const el = document.getElementById("loginErr");
+  el.textContent = "⚠️ " + msg; el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 4000);
+}
+
+function unlockAdmin(user) {
+  document.getElementById("blockedScreen").classList.remove("show");
+  document.getElementById("adminContent").classList.add("show");
+  document.getElementById("adminNavLink").style.display = "";
+  document.getElementById("welcomeMsg").textContent =
+    "أهلاً " + user.name + " · " +
+    new Date().toLocaleDateString("ar-JO",{weekday:"long",day:"numeric",month:"long"});
+  renderStats();
+  // جلب المنتجات من السيرفر
+  fetch(window.location.origin + "/api/products", {signal: AbortSignal.timeout(5000)})
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok && data.products && data.products.length > 0) {
+        products = data.products;
+        saveProducts();
+      }
+      renderProducts();
+    })
+    .catch(() => renderProducts());
+}
+
+function doAdminLogout() {
+  localStorage.removeItem("ns_session");
+  localStorage.removeItem("ns_token");
+  localStorage.removeItem("token");
+  window.location.href = "index.html";
+}
+
+// ================================================================
+// TABS
+// ================================================================
+function switchTab(tab, btn) {
+  document.querySelectorAll(".admin-nav-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.querySelectorAll(".admin-tab-panel").forEach(p => p.classList.remove("active"));
+  document.getElementById("panel-" + tab).classList.add("active");
+  if (tab === "orders")            renderOrders();
+  if (tab === "users")             renderUsers();
+  if (tab === "products")          renderProducts();
+  if (tab === "analytics")         loadAnalytics();
+  if (tab === "notifications-send") populateNotifTargets();
+  if (tab === "chats")             renderAdminChats();
+}
+
+// ================================================================
+// STATS
+// ================================================================
+async function renderStats() {
+  const token = getToken();
+  const serverBase = window.location.origin;
+  let orders = DB.getAllOrders();
+  let users  = DB.getUsers();
+
+  if (token) {
+    try {
+      const res = await fetch(serverBase + "/api/admin/stats", {
+        headers: {"Authorization": "Bearer " + token},
+        signal: AbortSignal.timeout(4000)
+      }).then(r => r.json());
+      if (res.ok && res.stats) {
+        const s = res.stats;
+        const banned = users.filter(u => u.banned).length;
+        document.getElementById("statsGrid").innerHTML = `
+          <div class="stat-card"><div class="stat-card-icon">📦</div><div class="stat-card-num">${products.length}</div><div class="stat-card-label">المنتجات</div></div>
+          <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-card-num">${s.totalUsers}</div><div class="stat-card-label">المستخدمين</div></div>
+          <div class="stat-card"><div class="stat-card-icon">🛒</div><div class="stat-card-num">${s.totalOrders}</div><div class="stat-card-label">الطلبات</div></div>
+          <div class="stat-card" style="${s.pending>0?'border-color:#f59e0b':''}">
+            <div class="stat-card-icon">⏳</div>
+            <div class="stat-card-num" style="color:#f59e0b">${s.pending}</div>
+            <div class="stat-card-label">تنتظر التأكيد</div>
+          </div>
+          <div class="stat-card"><div class="stat-card-icon">💰</div><div class="stat-card-num">$${(s.revenue||0).toFixed(0)}</div><div class="stat-card-label">الإيرادات</div></div>
+          <div class="stat-card" style="${banned>0?'border-color:#ef4444':''}">
+            <div class="stat-card-icon">🚫</div>
+            <div class="stat-card-num" style="${banned>0?'color:#ef4444':''}">${banned}</div>
+            <div class="stat-card-label">محظورون</div>
+          </div>`;
+        return;
+      }
+    } catch {}
+  }
+
+  const pending = orders.filter(o => o.status === "pending").length;
+  const revenue = orders.filter(o => !["pending","rejected"].includes(o.status)).reduce((s,o) => s+o.total, 0);
+  const banned  = users.filter(u => u.banned).length;
+  document.getElementById("statsGrid").innerHTML = `
+    <div class="stat-card"><div class="stat-card-icon">📦</div><div class="stat-card-num">${products.length}</div><div class="stat-card-label">المنتجات</div></div>
+    <div class="stat-card"><div class="stat-card-icon">👥</div><div class="stat-card-num">${users.filter(u=>u.role!=="admin").length}</div><div class="stat-card-label">المستخدمين</div></div>
+    <div class="stat-card"><div class="stat-card-icon">🛒</div><div class="stat-card-num">${orders.length}</div><div class="stat-card-label">الطلبات</div></div>
+    <div class="stat-card" style="${pending>0?'border-color:#f59e0b':''}">
+      <div class="stat-card-icon">⏳</div>
+      <div class="stat-card-num" style="color:#f59e0b">${pending}</div>
+      <div class="stat-card-label">تنتظر التأكيد</div>
+    </div>
+    <div class="stat-card"><div class="stat-card-icon">💰</div><div class="stat-card-num">$${revenue.toFixed(0)}</div><div class="stat-card-label">الإيرادات</div></div>
+    <div class="stat-card" style="${banned>0?'border-color:#ef4444':''}">
+      <div class="stat-card-icon">🚫</div>
+      <div class="stat-card-num" style="${banned>0?'color:#ef4444':''}">${banned}</div>
+      <div class="stat-card-label">محظورون</div>
+    </div>`;
+}
+
+// ================================================================
+// PRODUCTS
+// ================================================================
+function renderProducts() {
+  const grid = document.getElementById("productsGrid");
+  if (!grid) return;
+  if (products.length === 0) {
+    grid.innerHTML = `<div class="empty-msg" style="grid-column:1/-1"><div class="ei">📦</div><p>لا توجد منتجات</p></div>`;
+    return;
+  }
+  grid.innerHTML = "";
+  products.forEach(p => {
+    const fp = p.discount ? (p.price*(1-p.discount/100)).toFixed(2) : p.price;
+    const d = document.createElement("div");
+    d.className = "admin-product-card";
+    d.innerHTML = `
+      <img src="${p.image}" alt="${p.name}" loading="lazy">
+      <div class="admin-product-card-info">
+        <h3>${p.name}</h3>
+        <div class="price">$${fp}
+          ${p.discount ? `<span style="color:var(--muted);font-size:0.8rem;text-decoration:line-through;margin-right:6px">$${p.price}</span><span style="color:#22c55e;font-size:0.78rem">-${p.discount}%</span>` : ""}
+        </div>
+        <div style="color:var(--muted);font-size:0.78rem;margin-bottom:12px">${CAT[p.category]||p.category}</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-info" onclick="openEdit(${p.id})">✏️ تعديل</button>
+          <button class="delete-btn" onclick="deleteProduct(${p.id})">🗑️ حذف</button>
+        </div>
+      </div>`;
+    grid.appendChild(d);
+  });
+}
+
+async function addProduct() {
+  const name     = document.getElementById("pName").value.trim();
+  const price    = parseFloat(document.getElementById("pPrice").value);
+  const image    = document.getElementById("pImage").value.trim();
+  const category = document.getElementById("pCategory").value;
+  const discount = parseInt(document.getElementById("pDiscount").value) || 0;
+  if (!name)             { showToast("⚠️ أدخل اسم المنتج"); return; }
+  if (!price || price<=0){ showToast("⚠️ أدخل سعراً صحيحاً"); return; }
+  const token = getToken();
+  let newId = Date.now();
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/products", {
+      method: "POST",
+      headers: {"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body: JSON.stringify({name, price, image, category, discount}),
+      signal: AbortSignal.timeout(6000)
+    }).then(r => r.json());
+    if (res.ok && res.product) newId = res.product.id;
+  } catch(e) {
+    console.warn("⚠️ إضافة محلية فقط:", e.message);
+  }
+  products.push({ id:newId, name, price,
+    image: image || `https://picsum.photos/300/200?random=${newId}`,
+    category, discount });
+  saveProducts();
+  showToast("✅ تم إضافة المنتج!");
+  ["pName","pPrice","pImage","pDiscount"].forEach(id => document.getElementById(id).value = "");
+  renderStats(); renderProducts();
+  document.querySelectorAll(".admin-nav-btn")[0].click();
+}
+
+async function deleteProduct(id) {
+  if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+  const token = getToken();
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/products/" + id, {
+      method: "DELETE",
+      headers: {"Authorization":"Bearer "+token},
+      signal: AbortSignal.timeout(6000)
+    }).then(r => r.json());
+    if (!res.ok) { showToast("❌ " + (res.msg||"خطأ")); return; }
+  } catch(e) {
+    console.warn("⚠️ حذف محلي فقط:", e.message);
+  }
+  products = products.filter(p => p.id !== id);
+  saveProducts(); showToast("🗑️ تم حذف المنتج");
+  renderStats(); renderProducts();
+}
+
+function openEdit(id) {
+  const p = products.find(p => p.id === id); if (!p) return;
+  document.getElementById("editId").value       = p.id;
+  document.getElementById("editName").value     = p.name;
+  document.getElementById("editPrice").value    = p.price;
+  document.getElementById("editImage").value    = p.image;
+  document.getElementById("editCategory").value = p.category;
+  document.getElementById("editDiscount").value = p.discount || 0;
+  openModal("editModal");
+}
+
+async function saveEdit() {
+  const id       = parseInt(document.getElementById("editId").value);
+  const name     = document.getElementById("editName").value.trim();
+  const price    = parseFloat(document.getElementById("editPrice").value);
+  const image    = document.getElementById("editImage").value.trim();
+  const category = document.getElementById("editCategory").value;
+  const discount = parseInt(document.getElementById("editDiscount").value) || 0;
+  if (!name)             { showToast("⚠️ أدخل الاسم"); return; }
+  if (!price || price<=0){ showToast("⚠️ أدخل سعراً صحيحاً"); return; }
+  const token = getToken();
+  try {
+    await fetch(window.location.origin + "/api/admin/products/" + id, {
+      method: "PUT",
+      headers: {"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body: JSON.stringify({name, price, image, category, discount}),
+      signal: AbortSignal.timeout(6000)
+    });
+  } catch(e) {
+    console.warn("⚠️ تعديل محلي فقط:", e.message);
+  }
+  const idx = products.findIndex(p => p.id === id); if (idx === -1) return;
+  products[idx] = {...products[idx], name, price, image, category, discount};
+  saveProducts(); closeModal("editModal");
+  showToast("✅ تم تحديث المنتج!"); renderProducts();
+}
+
+// ================================================================
+// ORDERS
+// ================================================================
+let allOrders = [];
+
+async function renderOrders() {
+  const token = getToken();
+  const serverBase = window.location.origin;
+
+  if (token) {
+    try {
+      const res = await fetch(serverBase + "/api/admin/orders", {
+        headers: {"Authorization": "Bearer " + token},
+        signal: AbortSignal.timeout(5000)
+      }).then(r => r.json());
+
+      if (res.ok && res.orders) {
+        // احفظ الطلبات في localStorage للـ fallback
+        localStorage.setItem("ns_orders", JSON.stringify(res.orders));
+        allOrders = res.orders.slice().reverse();
+        filterOrders();
+        return;
+      }
+    } catch (e) {
+      console.warn("Orders fetch failed:", e.message);
+    }
+  }
+
+  allOrders = DB.getAllOrders().slice().reverse();
+  filterOrders();
+}
+
+function filterOrders() {
+  const q      = (document.getElementById("orderSearch")?.value || "").toLowerCase();
+  const status = document.getElementById("orderStatusFilter")?.value || "all";
+  const users  = DB.getUsers();
+  const cont   = document.getElementById("ordersContainer");
+  let orders = allOrders;
+  if (status !== "all") orders = orders.filter(o => o.status === status);
+  if (q) orders = orders.filter(o => {
+    const u = users.find(u => u.id === o.userId);
+    return o.id.toLowerCase().includes(q) ||
+      (u && (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
+  });
+  if (orders.length === 0) {
+    cont.innerHTML = `<div class="empty-msg"><div class="ei">🛒</div><p>لا توجد طلبات</p></div>`;
+    return;
+  }
+  cont.innerHTML = "";
+  orders.forEach(order => {
+    const st   = STATUS[order.status] || STATUS.pending;
+    const user = users.find(u => u.id === order.userId);
+    const date = new Date(order.createdAt).toLocaleDateString("ar-JO",{day:"numeric",month:"short",year:"numeric"});
+    const actions = order.status==="pending" ? `
+        <button class="btn-confirm" onclick="changeStatus('${order.id}','confirmed')">✅ قبول</button>
+        <button class="btn-reject"  onclick="changeStatus('${order.id}','rejected')">❌ رفض</button>`
+      : order.status==="confirmed" ? `<button class="btn-ship" onclick="changeStatus('${order.id}','shipped')">🚚 تم الشحن</button>`
+      : order.status==="shipped"   ? `<button class="btn-deliver" onclick="changeStatus('${order.id}','delivered')">📦 تم التسليم</button>`
+      : `<span style="color:var(--muted);font-size:0.85rem">✓ مكتمل</span>`;
+    const d = document.createElement("div");
+    d.className = "order-admin-card";
+    d.innerHTML = `
+      <div class="order-top-row">
+        <div>
+          <div class="order-id-txt">${order.id}</div>
+          <div class="order-meta-txt">👤 ${user ? user.name+" · "+user.email : "زائر"} · ${date}</div>
+        </div>
+        <div class="sbadge ${st.cls}">${st.text}</div>
+      </div>
+      <div class="order-info-grid">
+        <div class="order-info-cell"><span>💰 المبلغ</span><strong style="color:var(--accent);font-family:'DM Mono',monospace">$${order.total.toFixed(2)}</strong></div>
+        <div class="order-info-cell"><span>📋 رقم التحويل</span><strong style="font-family:'DM Mono',monospace;font-size:0.85rem">${order.paymentRef||"—"}</strong></div>
+        <div class="order-info-cell"><span>🛍️ عدد المنتجات</span><strong>${(order.items||[]).length}</strong></div>
+      </div>
+      <div class="order-actions">${actions}</div>`;
+    cont.appendChild(d);
+  });
+}
+
+async function changeStatus(id, status) {
+  const token = getToken();
+  const msgs = {confirmed:"✅ تم قبول الطلب!",rejected:"❌ تم رفض الطلب",shipped:"🚚 تم الشحن",delivered:"📦 تم التسليم"};
+
+  // أرسل للسيرفر أولاً
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/orders/" + id + "/status", {
+      method: "PUT",
+      headers: {"Content-Type":"application/json","Authorization":"Bearer " + token},
+      body: JSON.stringify({ status }),
+      signal: AbortSignal.timeout(6000)
+    }).then(r => r.json());
+
+    if (res.ok) {
+      // حدّث in-place في allOrders
+      const idx = allOrders.findIndex(o => o.id == id);
+      if (idx !== -1) allOrders[idx].status = status;
+      // حدّث localStorage أيضاً
+      DB.updateOrderStatus(id, status);
+      showToast(msgs[status] || "✅ تم التحديث");
+      filterOrders();
+      renderStats();
+    } else {
+      showToast("❌ " + (res.msg || "فشل التحديث"));
+    }
+  } catch (e) {
+    // Fallback: تحديث محلي فقط
+    console.warn("Server unavailable, local update:", e.message);
+    DB.updateOrderStatus(id, status);
+    const idx = allOrders.findIndex(o => o.id == id);
+    if (idx !== -1) allOrders[idx].status = status;
+    showToast(msgs[status] || "✅ تم التحديث (محلي)");
+    filterOrders();
+    renderStats();
+  }
+}
+
+// ================================================================
+// USERS
+// ================================================================
+let allUsers = [];
+
+async function renderUsers() {
+  const cont = document.getElementById("usersContainer");
+  cont.innerHTML = `<div class="empty-msg"><div class="ei">⏳</div><p>جاري التحميل...</p></div>`;
+
+  const token = getToken();
+
+  // بناء الـ URL الصحيح — نفس الـ host الذي فُتحت منه الصفحة
+  const serverBase = window.location.origin; // http://192.168.x.x:3001 أو http://localhost:3001
+
+  if (token) {
+    try {
+      const res = await fetch(serverBase + "/api/admin/users", {
+        headers: {"Authorization": "Bearer " + token},
+        signal: AbortSignal.timeout(5000)
+      }).then(r => r.json());
+
+      if (res.ok && res.users) {
+        // دمج مستخدمي السيرفر مع localStorage
+        const localUsers = DB.getUsers();
+        res.users.forEach(su => {
+          const exists = localUsers.find(lu => lu.id == su.id || lu.email === su.email);
+          if (!exists) {
+            // أضف المستخدم من السيرفر لـ localStorage
+            localUsers.push({
+              id: su.id, name: su.name, email: su.email,
+              role: su.role || "customer",
+              emailVerified: su.emailVerified !== false,
+              banned: su.banned || false,
+              createdAt: su.createdAt || new Date().toISOString(),
+              orders: su.orders || [],
+              password: su.password || ""
+            });
+          }
+        });
+        DB.saveUsers(localUsers);
+        allUsers = res.users;
+        filterUsers();
+        return;
+      }
+    } catch (e) {
+      console.warn("Server fetch failed, using localStorage:", e.message);
+    }
+  }
+
+  // Fallback: localStorage فقط
+  allUsers = DB.getUsers();
+  filterUsers();
+}
+
+function filterUsers() {
+  const q       = (document.getElementById("userSearch")?.value || "").toLowerCase();
+  const filter  = document.getElementById("userStatusFilter")?.value || "all";
+  const cont    = document.getElementById("usersContainer");
+  const myId    = JSON.parse(localStorage.getItem("ns_session") || "null")?.id;
+
+  let users = allUsers.filter(u => u.id !== myId); // لا تعرض نفسك
+  if (filter === "banned") users = users.filter(u => u.banned);
+  if (filter === "active") users = users.filter(u => !u.banned);
+  if (q) users = users.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+
+  if (users.length === 0) {
+    cont.innerHTML = `
+      <div class="empty-msg">
+        <div class="ei">👥</div>
+        <p>لا يوجد مستخدمون مسجّلون بعد</p>
+        <p style="font-size:0.8rem;margin-top:8px">سجّل مستخدماً جديداً من صفحة <a href="login.html" style="color:var(--accent)">تسجيل الدخول</a></p>
+        <button onclick="renderUsers()" style="margin-top:16px;padding:9px 20px;border-radius:9px;border:1px solid var(--border);background:none;color:var(--accent);cursor:pointer;font-family:'Tajawal',sans-serif">🔄 تحديث</button>
+      </div>`;
+    return;
+  }
+  cont.innerHTML = "";
+  users.forEach(u => {
+    const orders   = DB.getUserOrders(u.id);
+    const spent    = orders.filter(o => !["pending","rejected"].includes(o.status)).reduce((s,o) => s+o.total, 0);
+    const isBanned = u.banned;
+    const isAdmin  = u.role === "admin";
+    const d = document.createElement("div");
+    d.className = "user-row" + (isBanned ? " banned-row" : "");
+    if (isAdmin) d.style.cssText = "border-color:rgba(245,158,11,0.45);background:rgba(245,158,11,0.04)";
+    d.innerHTML = `
+      <div class="u-avatar" style="${isAdmin ? 'background:linear-gradient(135deg,#f59e0b,#d97706)' : ''}">${u.name[0].toUpperCase()}</div>
+      <div class="u-info">
+        <div class="u-name">
+          ${u.name}
+          ${isAdmin ? `<span class="sbadge" style="font-size:0.68rem;padding:2px 10px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#f59e0b;margin-right:6px">👑 مدير</span>` : ""}
+          ${u.role === "staff" ? `<span class="sbadge" style="font-size:0.68rem;padding:2px 10px;background:rgba(181,112,58,0.12);border:1px solid rgba(181,112,58,0.35);color:#b5703a;margin-right:6px">🎧 موظف</span>` : ""}
+          ${isBanned ? `<span class="sbadge s-banned" style="font-size:0.68rem;padding:2px 8px">🚫 محظور</span>` : ""}
+        </div>
+        <div class="u-email">${u.email}</div>
+        <div style="font-size:0.72rem;margin-top:4px;color:${u.emailVerified?'#22c55e':'#f59e0b'}">
+          ${u.emailVerified ? "✓ بريد مؤكد" : "⚠ بريد غير مؤكد"}
+        </div>
+        <div style="color:var(--muted);font-size:0.75rem;margin-top:2px">انضم: ${new Date(u.createdAt).toLocaleDateString("ar-JO")}</div>
+      </div>
+      <div class="u-stats">
+        <div class="u-stat"><div>${orders.length}</div><small>طلب</small></div>
+        <div class="u-stat"><div style="color:var(--accent)">$${spent.toFixed(0)}</div><small>مشتريات</small></div>
+      </div>
+      <div class="u-actions">
+        <button class="btn-info" onclick="viewOrders(${u.id},'${u.name.replace(/'/g,"\\'")}')">📋 الطلبات</button>
+        ${isAdmin
+          ? `<button onclick="setUserRole(${u.id},'customer')" style="padding:8px 14px;border-radius:8px;cursor:pointer;background:rgba(200,169,107,0.1);border:1px solid rgba(200,169,107,0.4);color:#c8a96b;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700">⬇️ إزالة أدمن</button>`
+          : u.role === "staff"
+            ? `<button onclick="setUserRole(${u.id},'customer')" style="padding:8px 14px;border-radius:8px;cursor:pointer;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#ef4444;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700">❌ إزالة موظف</button>
+               <button onclick="setUserRole(${u.id},'admin')" style="padding:8px 14px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(234,179,8,0.15));border:1px solid rgba(245,158,11,0.5);color:#f59e0b;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700">👑 ترقية لمدير</button>`
+            : `<button onclick="setUserRole(${u.id},'staff')" style="padding:8px 14px;border-radius:8px;cursor:pointer;background:rgba(181,112,58,0.1);border:1px solid rgba(181,112,58,0.35);color:#b5703a;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700">🎧 جعله موظفاً</button>
+               <button onclick="setUserRole(${u.id},'admin')" style="padding:8px 14px;border-radius:8px;cursor:pointer;background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(234,179,8,0.15));border:1px solid rgba(245,158,11,0.5);color:#f59e0b;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700">👑 ترقية لمدير</button>`}
+        ${!isAdmin ? (isBanned
+          ? `<button class="btn-warning" onclick="toggleBan(${u.id},false)">✅ رفع الحظر</button>`
+          : `<button class="btn-warning" onclick="toggleBan(${u.id},true)">🚫 حظر</button>`) : ""}
+        ${!isAdmin ? `<button class="btn-danger" onclick="deleteUser(${u.id})">🗑️ حذف</button>` : ""}
+      </div>`;
+    cont.appendChild(d);
+  });
+}
+
+async function deleteUser(id) {
+  if (!confirm("هل تريد حذف هذا المستخدم نهائياً؟")) return;
+  const token = getToken();
+  let serverDone = false;
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/users/" + id, {
+      method: "DELETE",
+      headers: {"Authorization": "Bearer " + token},
+      signal: AbortSignal.timeout(8000)
+    }).then(r => r.json());
+    if (!res.ok) { showToast("❌ " + (res.msg || "خطأ")); return; }
+    serverDone = true;
+    console.log("✅ حُذف من السيرفر");
+  } catch (e) {
+    console.warn("⚠️ السيرفر غير متاح، حذف محلي فقط:", e.message);
+  }
+  // حذف محلي دائماً
+  const users = DB.getUsers();
+  const user  = users.find(u => u.id == id);
+  if (user && user.role === "admin" && !serverDone) { showToast("❌ لا يمكن حذف الأدمن"); return; }
+  DB.saveUsers(users.filter(u => u.id != id));
+  const orders = DB.getAllOrders().filter(o => o.userId != id);
+  localStorage.setItem("ns_orders", JSON.stringify(orders));
+  showToast("🗑️ تم حذف المستخدم وكل بياناته");
+  allUsers = allUsers.filter(u => u.id != id);
+  filterUsers(); renderStats();
+  // إذا المستخدم المحذوف مسجل دخول حالياً → بث رسالة تسجيل خروج
+  broadcastToUser(id, "force_logout");
+  // تحديث قائمة الإشعارات إذا كانت مفتوحة
+  if (document.getElementById("panel-notifications-send")?.classList.contains("active")) {
+    populateNotifTargets();
+  }
+}
+
+async function toggleBan(id, ban) {
+  if (!confirm(ban ? "هل تريد حظر هذا المستخدم؟" : "هل تريد رفع الحظر؟")) return;
+  const token = getToken();
+  // تنفيذ على السيرفر
+  try {
+    const endpoint = window.location.origin + (ban ? "/api/admin/ban-user/" : "/api/admin/unban-user/") + id;
+    const res = await fetch(endpoint, {
+      method: "PUT",
+      headers: {"Authorization": "Bearer " + token},
+      signal: AbortSignal.timeout(8000)
+    }).then(r => r.json());
+    if (!res.ok) { showToast("❌ " + (res.msg || "خطأ")); return; }
+    console.log("✅ تم على السيرفر");
+  } catch (e) {
+    console.warn("⚠️ السيرفر غير متاح، تطبيق محلي فقط:", e.message);
+  }
+  // تطبيق محلي دائماً
+  const users = DB.getUsers();
+  const idx   = users.findIndex(u => u.id == id);
+  if (idx !== -1) {
+    if (users[idx].role === "admin") { showToast("❌ لا يمكن حظر الأدمن"); return; }
+    users[idx].banned = ban;
+    DB.saveUsers(users);
+  }
+  const ai = allUsers.findIndex(u => u.id == id);
+  if (ai !== -1) allUsers[ai].banned = ban;
+  showToast(ban ? "🚫 تم الحظر" : "✅ تم رفع الحظر");
+  document.getElementById("userStatusFilter").value = "all";
+  filterUsers(); renderStats();
+  // إشعار فوري للمستخدم
+  if (ban) broadcastToUser(id, "force_logout");
+}
+
+async function viewOrders(userId, userName) {
+  document.getElementById("ordersModalTitle").textContent = `📋 طلبات ${userName}`;
+  const list = document.getElementById("ordersModalList");
+  list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted)">⏳ جاري التحميل...</div>`;
+  openModal("ordersModal");
+
+  // جلب من السيرفر
+  let orders = [];
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/user-orders/" + userId, {
+      headers: {"Authorization":"Bearer " + getToken()},
+      signal: AbortSignal.timeout(6000)
+    }).then(r => r.json());
+    if (res.ok) orders = res.orders;
+  } catch {}
+  // fallback localStorage
+  if (orders.length === 0) orders = DB.getUserOrders(userId);
+
+  document.getElementById("ordersModalTitle").textContent = `📋 طلبات ${userName} (${orders.length})`;
+  if (orders.length === 0) {
+    list.innerHTML = `<div class="empty-msg" style="padding:30px"><div class="ei">🛒</div><p>لا توجد طلبات</p></div>`;
+    return;
+  }
+  list.innerHTML = "";
+  orders.slice().reverse().forEach(o => {
+      const st   = STATUS[o.status] || STATUS.pending;
+      const date = new Date(o.createdAt).toLocaleDateString("ar-JO");
+      const c = document.createElement("div");
+      c.className = "order-mini-card";
+      c.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <span style="font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--accent)">${o.id}</span>
+          <span class="sbadge ${st.cls}">${st.text}</span>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:16px;flex-wrap:wrap;color:var(--muted);font-size:0.82rem">
+          <span>💰 <strong style="color:var(--text)">$${o.total.toFixed(2)}</strong></span>
+          <span>📅 ${date}</span>
+          <span>🛍️ ${(o.items||[]).length} منتج</span>
+        </div>`;
+      list.appendChild(c);
+  });
+}
+
+
+// ================================================================
+// بث رسالة للمستخدم (حظر/حذف) — يُكتب في localStorage مشترك
+// ================================================================
+function broadcastToUser(userId, action) {
+  // نكتب في مفتاح يقرأه المستخدم عند أي تفاعل مع الصفحة
+  localStorage.setItem("ns_admin_action_" + userId, JSON.stringify({
+    action, // "force_logout" 
+    timestamp: Date.now()
+  }));
+}
+
+// ================================================================
+// NOTIFICATIONS BROADCAST — يخزن لكل مستخدم بـ key منفصل
+// ================================================================
+
+// ================================================================
+// إرسال إشعار — يرسل للسيرفر أولاً (يُحفظ في notifications.json)
+// ================================================================
+async function sendBroadcastNotif() {
+  const target = document.getElementById("notifTarget").value;
+  const type   = document.getElementById("notifType").value;
+  const title  = document.getElementById("notifTitle").value.trim();
+  const body   = document.getElementById("notifBody").value.trim();
+  if (!title || !body) { showToast("⚠️ الرجاء تعبئة العنوان والنص"); return; }
+
+  const token = getToken();
+
+  // إرسال للسيرفر — يُحفظ في notifications.json ويصل لجميع الأجهزة
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/send-notification", {
+      method: "POST",
+      headers: { "Content-Type":"application/json", "Authorization":"Bearer " + token },
+      body: JSON.stringify({ userId: target, type, title, body }),
+      signal: AbortSignal.timeout(8000)
+    }).then(r => r.json());
+
+    if (res.ok) {
+      const users = DB.getUsers().filter(u => u.role !== "admin");
+      const count = target === "all" ? users.length : 1;
+      showToast(`✅ تم إرسال الإشعار لـ ${count} مستخدم!`);
+      document.getElementById("notifTitle").value = "";
+      document.getElementById("notifBody").value = "";
+      return;
+    }
+    showToast("❌ " + (res.msg || "خطأ في الإرسال"));
+  } catch (e) {
+    // Fallback: localStorage فقط إذا السيرفر غير متاح
+    console.warn("⚠️ السيرفر غير متاح، إرسال محلي:", e.message);
+    const users = DB.getUsers().filter(u => u.role !== "admin");
+    if (target === "all") {
+      users.forEach(u => NS_Notifications.writeToUser(u.id, type, title, body, null));
+      showToast(`⚠️ تم الإرسال محلياً لـ ${users.length} مستخدم (السيرفر غير متاح)`);
+    } else {
+      NS_Notifications.writeToUser(parseInt(target), type, title, body, null);
+      showToast("⚠️ تم الإرسال محلياً (السيرفر غير متاح)");
+    }
+    document.getElementById("notifTitle").value = "";
+    document.getElementById("notifBody").value = "";
+  }
+}
+
+
+async function populateNotifTargets() {
+  const select = document.getElementById("notifTarget");
+  select.innerHTML = `<option value="all">📢 جميع المستخدمين</option>`;
+
+  // جلب من السيرفر أولاً للحصول على القائمة الحقيقية
+  const token = getToken();
+  let users = [];
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/users", {
+      headers: {"Authorization": "Bearer " + token},
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+    if (res.ok && res.users) {
+      users = res.users.filter(u => u.role !== "admin");
+    }
+  } catch {
+    // fallback: localStorage
+    users = DB.getUsers().filter(u => u.role !== "admin");
+  }
+
+  users.forEach(u => {
+    const opt = document.createElement("option");
+    opt.value = u.id;
+    opt.textContent = u.name;
+    select.appendChild(opt);
+  });
+}
+
+// ================================================================
+// ADMIN ROLE MANAGEMENT — ترقية/تخفيض المدير
+// ================================================================
+// Unified role setter (replaces old toggleAdminRole)
+async function setUserRole(id, newRole) {
+  const labels = { admin:"مدير", staff:"موظف", customer:"عميل" };
+  if (!confirm(`هل تريد تغيير دور هذا المستخدم إلى "${labels[newRole]}"؟`)) return;
+  const token = getToken();
+
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/set-role/" + id, {
+      method: "PUT",
+      headers: {"Content-Type":"application/json","Authorization":"Bearer " + token},
+      body: JSON.stringify({ role: newRole }),
+      signal: AbortSignal.timeout(8000)
+    }).then(r => r.json());
+    if (!res.ok) { showToast("❌ " + (res.msg || "خطأ")); return; }
+  } catch (e) {
+    console.warn("⚠️ تطبيق محلي:", e.message);
+  }
+
+  // تحديث محلي
+  const users = DB.getUsers();
+  const idx2  = users.findIndex(u => u.id == id);
+  if (idx2 !== -1) {
+    if (newRole !== "customer") {
+      const admins = users.filter(u => u.role === "admin");
+      if (users[idx2].role === "admin" && newRole !== "admin" && admins.length <= 1) {
+        showToast("❌ يجب أن يبقى مدير واحد على الأقل"); return;
+      }
+    }
+    users[idx2].role = newRole;
+    if (newRole !== "customer") users[idx2].emailVerified = true;
+    DB.saveUsers(users);
+  }
+  const ai = allUsers.findIndex(u => u.id == id);
+  if (ai !== -1) allUsers[ai].role = newRole;
+
+  const msgs = { admin:"👑 تم منح صلاحيات المدير!", staff:"🎧 تم تعيين الموظف!", customer:"✅ تم تغيير الدور لعميل" };
+  showToast(msgs[newRole] || "تم التحديث");
+  await renderUsers();
+  renderStats();
+}
+
+// Backward compat
+function toggleAdminRole(id, makeAdmin) {
+  return setUserRole(id, makeAdmin ? "admin" : "customer");
+}
+
+// ================================================================
+// ADMIN CHAT
+// ================================================================
+let allChats = [];
+
+async function renderAdminChats() {
+  const cont  = document.getElementById("adminChatsContainer");
+  const token = getToken();
+  cont.innerHTML = `<div class="empty-msg"><div class="ei">⏳</div><p>جاري التحميل...</p></div>`;
+
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/chats", {
+      headers: {"Authorization":"Bearer " + token},
+      signal: AbortSignal.timeout(6000)
+    }).then(r => r.json());
+
+    if (res.ok) {
+      allChats = res.chats;
+      filterChats();
+      return;
+    }
+  } catch(e) { console.warn("Chat fetch failed:", e.message); }
+
+  cont.innerHTML = `<div class="empty-msg"><div class="ei">💬</div><p>تعذّر تحميل المحادثات — تأكد من تشغيل السيرفر</p></div>`;
+}
+
+function filterChats() {
+  const q      = (document.getElementById("chatSearch")?.value || "").toLowerCase();
+  const status = document.getElementById("chatStatusFilter")?.value || "all";
+  const cont   = document.getElementById("adminChatsContainer");
+
+  let chats = allChats;
+  if (status !== "all") chats = chats.filter(c => c.status === status);
+  if (q) chats = chats.filter(c =>
+    c.customerName.toLowerCase().includes(q) ||
+    c.staffName.toLowerCase().includes(q)
+  );
+
+  if (chats.length === 0) {
+    cont.innerHTML = `<div class="empty-msg"><div class="ei">💬</div><p>لا توجد محادثات</p></div>`;
+    return;
+  }
+
+  cont.innerHTML = "";
+  chats.forEach(ch => {
+    const d = document.createElement("div");
+    d.style.cssText = `background:var(--card);border:1px solid var(--border);border-radius:14px;
+      padding:16px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px;
+      cursor:pointer;transition:border-color 0.2s;${ch.unread > 0 ? 'border-color:rgba(200,169,107,0.45)' : ''}`;
+    d.onmouseover = () => d.style.borderColor = "rgba(200,169,107,0.4)";
+    d.onmouseout  = () => d.style.borderColor = ch.unread > 0 ? "rgba(200,169,107,0.45)" : "var(--border)";
+
+    const timeAgo = _timeAgo(ch.lastTime);
+    const statusBadge = ch.status === "open"
+      ? `<span style="background:rgba(34,197,94,0.1);color:#22c55e;border:1px solid rgba(34,197,94,0.3);padding:2px 8px;border-radius:50px;font-size:0.7rem;font-weight:700">🟢 مفتوحة</span>`
+      : `<span style="background:rgba(239,68,68,0.1);color:#ef4444;border:1px solid rgba(239,68,68,0.3);padding:2px 8px;border-radius:50px;font-size:0.7rem;font-weight:700">🔴 مغلقة</span>`;
+
+    d.innerHTML = `
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));
+           display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;color:white;flex-shrink:0">
+        ${ch.customerName[0].toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+          <span style="font-weight:700;font-size:0.92rem">${_esc(ch.customerName)}</span>
+          ${statusBadge}
+          ${ch.unread > 0 ? `<span style="background:#ef4444;color:white;font-size:0.65rem;font-weight:800;padding:2px 7px;border-radius:50px">${ch.unread} جديد</span>` : ""}
+        </div>
+        <div style="color:var(--muted);font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          ${_esc(ch.lastMsg) || "لا توجد رسائل بعد"}
+        </div>
+        <div style="color:var(--muted);font-size:0.72rem;margin-top:3px">
+          👤 موظف: ${_esc(ch.staffName)} &nbsp;·&nbsp; ${timeAgo} &nbsp;·&nbsp; ${ch.msgCount} رسالة
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+        <a href="chat.html?id=${ch.chatId}" target="_blank"
+          style="padding:7px 14px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+                 color:white;text-decoration:none;font-size:0.82rem;font-weight:700;text-align:center">
+          💬 فتح
+        </a>
+        ${ch.status === "open" ? `<button onclick="closeChat('${ch.chatId}',this)"
+          style="padding:7px 14px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                 color:#ef4444;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700">
+          إغلاق
+        </button>` : ""}
+        <button onclick="deleteChatAdmin('${ch.chatId}',this)"
+          style="padding:7px 12px;border-radius:8px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);
+                 color:#ef4444;cursor:pointer;font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:700"
+          title="حذف المحادثة">🗑</button>
+      </div>`;
+    cont.appendChild(d);
+  });
+}
+
+async function closeChat(chatId, btn) {
+  const token = getToken();
+  btn.disabled = true; btn.textContent = "...";
+  try {
+    const res = await fetch(window.location.origin + "/api/chat/" + chatId + "/close", {
+      method: "PUT", headers: {"Authorization":"Bearer " + token},
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+    if (res.ok) { showToast("✅ تم إغلاق المحادثة"); renderAdminChats(); }
+    else { btn.textContent = "إغلاق"; btn.disabled = false; }
+  } catch { btn.textContent = "إغلاق"; btn.disabled = false; }
+}
+
+async function deleteChatAdmin(chatId, btn) {
+  if (!confirm("هل تريد حذف هذه المحادثة نهائياً؟")) return;
+  const token = getToken();
+  btn.disabled = true; btn.textContent = "...";
+  try {
+    const res = await fetch(window.location.origin + "/api/chat/" + chatId, {
+      method: "DELETE", headers: {"Authorization":"Bearer " + token},
+      signal: AbortSignal.timeout(5000)
+    }).then(r => r.json());
+    if (res.ok) { showToast("✅ تم حذف المحادثة"); renderAdminChats(); }
+    else { btn.textContent = "🗑"; btn.disabled = false; showToast("❌ " + (res.msg||"خطأ")); }
+  } catch { btn.textContent = "🗑"; btn.disabled = false; }
+}
+
+function _timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr)) / 1000;
+  if (diff < 60)     return "الآن";
+  if (diff < 3600)   return `منذ ${Math.floor(diff/60)} دقيقة`;
+  if (diff < 86400)  return `منذ ${Math.floor(diff/3600)} ساعة`;
+  return `منذ ${Math.floor(diff/86400)} يوم`;
+}
+
+
+// ================================================================
+// ANALYTICS
+// ================================================================
+async function loadAnalytics() {
+  const token = getToken();
+  try {
+    const res = await fetch(window.location.origin + "/api/admin/analytics", {
+      headers: { "Authorization":"Bearer "+token }
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error("no data");
+    const { dailyRevenue, statusDist, newUsers, totalUsers } = data.analytics;
+
+    const maxRev = Math.max(...dailyRevenue.map(d => d.revenue), 1);
+    document.getElementById("analyticsRevenue").innerHTML = dailyRevenue.map(d => {
+      const pct = Math.round(d.revenue / maxRev * 100);
+      const dateLabel = new Date(d.date).toLocaleDateString("ar-JO",{weekday:"short",day:"numeric",month:"short"});
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="min-width:80px;font-size:0.78rem;color:var(--muted)">${dateLabel}</span>
+        <div style="flex:1;height:28px;background:var(--bg);border-radius:6px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px;display:flex;align-items:center;padding:0 8px">
+            ${d.revenue > 0 ? `<span style="font-size:0.72rem;font-weight:700;color:white;white-space:nowrap">$${d.revenue.toFixed(0)}</span>` : ""}
+          </div>
+        </div>
+        <span style="font-size:0.78rem;color:var(--muted);min-width:40px">${d.count} طلب</span>
+      </div>`;
+    }).join("");
+
+    const statusLabels = {pending:"⏳ قيد المراجعة",confirmed:"✅ مؤكد",shipped:"🚚 شحن",delivered:"📦 تسليم",rejected:"❌ مرفوض"};
+    document.getElementById("analyticsStatus").innerHTML = Object.entries(statusDist).map(([s, n]) => {
+      const total = Object.values(statusDist).reduce((a,b)=>a+b,0);
+      const pct = Math.round(n / total * 100);
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="min-width:110px;font-size:0.82rem">${statusLabels[s]||s}</span>
+        <div style="flex:1;height:24px;background:var(--bg);border-radius:6px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:rgba(200,169,107,0.3);border-radius:6px"></div>
+        </div>
+        <span style="font-size:0.82rem;font-weight:700">${n} (${pct}%)</span>
+      </div>`;
+    }).join("") || "<p>لا توجد بيانات</p>";
+
+    document.getElementById("analyticsUsers").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:var(--bg);border-radius:10px;padding:20px;text-align:center">
+          <div style="font-size:2.5rem;font-weight:900;color:var(--accent);font-family:'DM Mono',monospace">${totalUsers}</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">إجمالي المستخدمين</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:20px;text-align:center">
+          <div style="font-size:2.5rem;font-weight:900;color:#22c55e;font-family:'DM Mono',monospace">+${newUsers}</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">مستخدم جديد هذا الأسبوع</div>
+        </div>
+      </div>`;
+  } catch {
+    // Fallback: local analytics
+    const orders = DB.getAllOrders();
+    const users  = DB.getUsers();
+    const statusDist = {};
+    orders.forEach(o => { statusDist[o.status] = (statusDist[o.status]||0)+1; });
+    const statusLabels = {pending:"⏳ قيد المراجعة",confirmed:"✅ مؤكد",shipped:"🚚 شحن",delivered:"📦 تسليم",rejected:"❌ مرفوض"};
+    const total = orders.length || 1;
+    document.getElementById("analyticsRevenue").innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted)">📊 البيانات التفصيلية تتطلب السيرفر</div>`;
+    document.getElementById("analyticsStatus").innerHTML = Object.entries(statusDist).map(([s,n]) => {
+      const pct = Math.round(n/total*100);
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="min-width:110px;font-size:0.82rem">${statusLabels[s]||s}</span>
+        <div style="flex:1;height:24px;background:var(--bg);border-radius:6px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:rgba(200,169,107,0.3);border-radius:6px"></div>
+        </div>
+        <span style="font-size:0.82rem;font-weight:700">${n} (${pct}%)</span>
+      </div>`;
+    }).join("") || "<p style='color:var(--muted)'>لا توجد طلبات بعد</p>";
+    document.getElementById("analyticsUsers").innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:var(--bg);border-radius:10px;padding:20px;text-align:center">
+          <div style="font-size:2.5rem;font-weight:900;color:var(--accent);font-family:'DM Mono',monospace">${users.filter(u=>u.role!=="admin").length}</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">إجمالي المستخدمين</div>
+        </div>
+        <div style="background:var(--bg);border-radius:10px;padding:20px;text-align:center">
+          <div style="font-size:2.5rem;font-weight:900;color:#22c55e;font-family:'DM Mono',monospace">${orders.length}</div>
+          <div style="color:var(--muted);font-size:0.82rem;margin-top:4px">إجمالي الطلبات</div>
+        </div>
+      </div>`;
+  }
+}
+
+</script>
+</body>
+</html>

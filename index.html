@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#c8a96b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NovaShop">
+<title>NovaShop — تسوّق المستقبل</title>
+<meta name="description" content="NovaShop — متجرك الذكي لأفضل المنتجات بأسعار لا تُقاوم">
+<link rel="stylesheet" href="styles.css?v=3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Cormorant+Garamond:wght@400;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<script src="db.js"></script>
+<script src="api.js"></script>
+<script src="notifications.js" defer></script>
+</head>
+<body>
+
+<!-- ① صفحة التقدم -->
+<div class="page-progress"><div class="page-progress-bar" id="pageProgress"></div></div>
+
+<!-- ② توهج المؤشر -->
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- ③ خلفية الهيرو -->
+<div class="hero-bg">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+  <div class="blob blob4"></div>
+  <div class="grid-overlay"></div>
+</div>
+
+<!-- ===== NAVBAR ===== -->
+<header id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      <div class="logo-icon">◈</div>
+      <span>Nova<strong>Shop</strong></span>
+    </a>
+    <nav class="nav-links">
+      <a href="index.html" class="active">الرئيسية</a>
+      <a href="products.html">المنتجات</a>
+      <a href="chat.html">💬 الدعم</a>
+      <a href="cart.html" class="cart-link">
+        السلة <span class="cart-badge" id="cartCount">0</span>
+      </a>
+      <span id="userNavItem"></span>
+      <!-- ④ زر الإشعارات -->
+      <button class="notif-btn" onclick="NS_Notifications.togglePanel()" id="notifToggle" style="display:none">
+        🔔 <span class="notif-badge" style="display:none">0</span>
+      </button>
+      <span id="adminNavItem"></span>
+    </nav>
+    <button class="notif-btn notif-btn-mobile" onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifToggleMobile" style="display:none;position:relative;background:rgba(200,169,107,0.08);border:1px solid rgba(200,169,107,0.2);border-radius:10px;padding:7px 10px;cursor:pointer;align-items:center;gap:4px;color:#94a3b8;font-size:1rem;">🔔<span class="notif-badge" style="display:none">0</span></button><button class="menu-btn" onclick="toggleMenu()">☰</button>
+  </div>
+  <div class="mobile-menu" id="mobileMenu">
+    <a href="index.html">الرئيسية</a>
+    <a href="products.html">المنتجات</a>
+    <a href="chat.html">💬 الدعم</a>
+    <a href="cart.html">السلة</a>
+    <a href="profile.html">حسابي</a>
+    <span id="adminMobileItem"></span>
+  
+    <button onclick="NS_Notifications && NS_Notifications.togglePanel()" id="notifMobileMenuBtn" style="display:none;background:none;border:none;color:var(--text);font-family:'Tajawal',sans-serif;font-size:1rem;padding:14px 28px;text-align:right;width:100%;cursor:pointer;border-bottom:1px solid var(--border);">🔔 الإشعارات <span id="notifMobileCount" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:800;padding:2px 6px;border-radius:50px;margin-right:4px;display:none">0</span></button></div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero" id="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      🔥 عروض حصرية · خصومات حتى 50%
+    </div>
+    <h1 class="hero-title">
+      <span class="line1">تسوّق</span>
+      <span class="line2">من المستقبل</span>
+    </h1>
+    <p class="hero-sub">اكتشف منتجات مختارة بعناية فائقة. جودة استثنائية، أسعار لا تُصدَّق، شحن فائق السرعة.</p>
+    <div class="hero-actions">
+      <a href="products.html" class="btn-primary">تصفّح المنتجات <span>←</span></a>
+      <a href="#flash-sale" class="btn-ghost">🔥 عروض اليوم</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num" data-target="14800">0</span>
+        <span class="stat-label">عميل سعيد</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" data-target="920">0</span>
+        <span class="stat-label">منتج مميز</span>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="stat">
+        <span class="stat-num" data-target="99">0</span>
+        <span class="stat-label">% رضا العملاء</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-glow-ring"></div>
+    <div class="floating-card card1">
+      <img src="https://picsum.photos/64/64?random=10" alt="Smart Watch">
+      <div><div class="fc-name">Smart Watch Pro</div><div class="fc-price">$29</div></div>
+    </div>
+    <div class="floating-card card2">
+      <img src="https://picsum.photos/64/64?random=20" alt="Earbuds">
+      <div><div class="fc-name">Wireless Earbuds</div><div class="fc-price">$25</div></div>
+    </div>
+    <div class="floating-card card3">⭐ 4.9 · 2.8K تقييم</div>
+  </div>
+</section>
+
+<!-- ⑤ شريط الثقة المتحرك -->
+<div class="trust-bar">
+  <div class="trust-ticker" id="trustTicker">
+    <div class="trust-item"><div class="trust-item-icon">🚚</div> شحن مجاني فوق $50</div>
+    <div class="trust-item"><div class="trust-item-icon">🔒</div> دفع آمن 100%</div>
+    <div class="trust-item"><div class="trust-item-icon">↩</div> إرجاع مجاني 30 يوم</div>
+    <div class="trust-item"><div class="trust-item-icon">⚡</div> دعم 24/7</div>
+    <div class="trust-item"><div class="trust-item-icon">🏆</div> جودة مضمونة</div>
+    <div class="trust-item"><div class="trust-item-icon">🎁</div> هدايا مع كل طلب</div>
+    <!-- نسخة مكررة للـ loop -->
+    <div class="trust-item"><div class="trust-item-icon">🚚</div> شحن مجاني فوق $50</div>
+    <div class="trust-item"><div class="trust-item-icon">🔒</div> دفع آمن 100%</div>
+    <div class="trust-item"><div class="trust-item-icon">↩</div> إرجاع مجاني 30 يوم</div>
+    <div class="trust-item"><div class="trust-item-icon">⚡</div> دعم 24/7</div>
+    <div class="trust-item"><div class="trust-item-icon">🏆</div> جودة مضمونة</div>
+    <div class="trust-item"><div class="trust-item-icon">🎁</div> هدايا مع كل طلب</div>
+  </div>
+</div>
+
+<!-- ===== CATEGORIES ===== -->
+<section class="categories-section">
+  <div class="section-header">
+    <div>
+      <div class="section-label">الفئات</div>
+      <h2>تسوّق حسب <span>الفئة</span></h2>
+    </div>
+  </div>
+  <div class="categories-grid">
+    <a href="products.html" class="cat-card cat-tech">
+      <span class="cat-icon">📱</span>
+      <div class="cat-name">تقنية</div>
+      <div class="cat-count">42 منتج</div>
+    </a>
+    <a href="products.html" class="cat-card cat-audio">
+      <span class="cat-icon">🎧</span>
+      <div class="cat-name">صوتيات</div>
+      <div class="cat-count">28 منتج</div>
+    </a>
+    <a href="products.html" class="cat-card cat-home">
+      <span class="cat-icon">🏠</span>
+      <div class="cat-name">المنزل</div>
+      <div class="cat-count">65 منتج</div>
+    </a>
+    <a href="products.html" class="cat-card cat-fashion">
+      <span class="cat-icon">👟</span>
+      <div class="cat-name">أزياء</div>
+      <div class="cat-count">89 منتج</div>
+    </a>
+  </div>
+</section>
+
+<!-- ⑥ فلاش سيل مع عداد تنازلي -->
+<section class="flash-sale-section" id="flash-sale">
+  <div style="max-width:1280px;margin:0 auto;padding:0 28px">
+  <div class="flash-sale-card">
+    <div class="flash-header">
+      <div class="flash-title-wrap">
+        <div class="flash-icon">⚡</div>
+        <div>
+          <div class="flash-title">فلاش سيل</div>
+          <div class="flash-sub">عروض محدودة الوقت — اشترِ قبل النفاد!</div>
+        </div>
+      </div>
+      <div class="countdown">
+        <div class="countdown-block"><div class="countdown-num" id="cdH">00</div><div class="countdown-label">ساعة</div></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-block"><div class="countdown-num" id="cdM">00</div><div class="countdown-label">دقيقة</div></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-block"><div class="countdown-num" id="cdS">00</div><div class="countdown-label">ثانية</div></div>
+      </div>
+    </div>
+    <div class="flash-grid" id="flashGrid"></div>
+  </div>
+  </div>
+</section>
+
+<!-- ===== FEATURED ===== -->
+<section class="featured-section" id="featured">
+  <div class="section-header">
+    <div>
+      <div class="section-label">مميزة</div>
+      <h2>المنتجات <span>المميزة</span></h2>
+      <p>اختيارات منتقاة بعناية لك</p>
+    </div>
+    <a href="products.html" class="see-all">عرض الكل ←</a>
+  </div>
+  <div id="featured-products" class="products-grid"></div>
+</section>
+
+<!-- ⑦ كيف يعمل -->
+<section class="how-it-works-section">
+  <div class="section-header">
+    <div>
+      <div class="section-label">العملية</div>
+      <h2>كيف <span>يعمل</span>؟</h2>
+    </div>
+  </div>
+  <div class="how-grid">
+    <div class="how-card">
+      <div class="how-num">🛍️</div>
+      <h3>اختر منتجاتك</h3>
+      <p>تصفّح مئات المنتجات المختارة بعناية من أفضل الماركات العالمية.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-num">🛒</div>
+      <h3>أضف للسلة</h3>
+      <p>أضف ما يعجبك للسلة وراجع طلبك قبل الإتمام.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-num">💳</div>
+      <h3>ادفع بأمان</h3>
+      <p>ادفع بأمان عبر ClickPay مع تشفير كامل لبياناتك.</p>
+    </div>
+    <div class="how-card">
+      <div class="how-num">📦</div>
+      <h3>استلم بسرعة</h3>
+      <p>توصيل سريع لباب منزلك مع تتبع لحظي للطلب.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PROMO BANNER ===== -->
+<div style="padding:0 28px;max-width:1280px;margin:0 auto;">
+<section class="promo-banner">
+  <div class="promo-content">
+    <div class="promo-tag">عرض محدود</div>
+    <h2>احصل على خصم 20%<br>على طلبك الأول</h2>
+    <p>استخدم كود الخصم وابدأ رحلتك معنا</p>
+    <div class="promo-code" onclick="copyCode('NOVA20')">
+      <span>NOVA20</span>
+      <span style="font-size:0.75rem;opacity:0.7">انقر للنسخ</span>
+    </div>
+    <a href="products.html" class="btn-primary">تسوّق الآن</a>
+  </div>
+  <div class="promo-visual">🛍️</div>
+</section>
+</div>
+
+<!-- ⑧ الماركات -->
+<section class="brands-section">
+  <div class="section-header">
+    <div>
+      <div class="section-label">شركاؤنا</div>
+      <h2>الماركات <span>المتاحة</span></h2>
+    </div>
+  </div>
+  <div class="brands-grid">
+    <div class="brand-card">APPLE</div>
+    <div class="brand-card">SAMSUNG</div>
+    <div class="brand-card">SONY</div>
+    <div class="brand-card">XIAOMI</div>
+    <div class="brand-card">ANKER</div>
+    <div class="brand-card">JBL</div>
+  </div>
+</section>
+
+<!-- ===== TESTIMONIALS ===== -->
+<section class="testimonials">
+  <div class="section-header">
+    <div>
+      <div class="section-label">آراء العملاء</div>
+      <h2>ماذا يقول <span>عملاؤنا</span></h2>
+    </div>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p>"جودة المنتجات فاقت توقعاتي والشحن كان في اليوم التالي. تجربة تسوق لا مثيل لها!"</p>
+      <div class="testi-author">
+        <div class="testi-avatar">أ</div>
+        <div><strong>أحمد محمد</strong><br><small>عميل مميز منذ 2024</small></div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p>"تجربة تسوق استثنائية. الموقع سلس والأسعار تنافسية جداً مقارنة بالمواقع الأخرى."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">س</div>
+        <div><strong>سارة علي</strong><br><small>عميلة دائمة</small></div>
+      </div>
+    </div>
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p>"أفضل موقع تسوق عربي. المنتجات أصلية 100% وخدمة العملاء ممتازة جداً."</p>
+      <div class="testi-author">
+        <div class="testi-avatar">م</div>
+        <div><strong>محمد خالد</strong><br><small>مشتري نشط</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== NEWSLETTER ===== -->
+<section class="newsletter">
+  <h2>🎁 اشترك واحصل على خصم</h2>
+  <p>اشترك في نشرتنا البريدية واحصل على خصم 15% على طلبك الأول + أحدث العروض قبل أي أحد</p>
+  <div class="newsletter-form">
+    <input type="email" placeholder="بريدك الإلكتروني..." id="emailInput">
+    <button onclick="subscribeNewsletter()">اشترك مجاناً</button>
+  </div>
+  <div class="newsletter-trust">
+    <span>🔒 لن نشارك بريدك مع أحد</span>
+    <span>·</span>
+    <span>📧 يمكنك إلغاء الاشتراك في أي وقت</span>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="logo"><div class="logo-icon" style="width:28px;height:28px;font-size:0.85rem">◈</div> Nova<strong>Shop</strong></div>
+      <p>متجرك الذكي لكل ما تحتاجه. منتجات مختارة بعناية بأفضل الأسعار وأسرع شحن.</p>
+      <div class="social-links">
+        <a href="#">𝕏</a><a href="#">in</a><a href="#">ig</a><a href="#">yt</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>روابط سريعة</h4>
+      <a href="index.html">الرئيسية</a>
+      <a href="products.html">المنتجات</a>
+      <a href="cart.html">السلة</a>
+      <a href="profile.html">حسابي</a>
+    </div>
+    <div class="footer-col">
+      <h4>المساعدة</h4>
+      <a href="#">سياسة الإرجاع</a>
+      <a href="#">الشحن والتوصيل</a>
+      <a href="#">تواصل معنا</a>
+      <a href="#">الأسئلة الشائعة</a>
+    </div>
+    <div class="footer-col">
+      <h4>النشرة البريدية</h4>
+      <p style="font-size:0.82rem">احصل على أحدث العروض في بريدك</p>
+      <div class="footer-newsletter-mini">
+        <input type="email" placeholder="بريدك..." id="footerEmail">
+        <button onclick="subscribeFooter()">←</button>
+      </div>
+      <p style="margin-top:12px">📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="7e0d0b0e0e110c0a3e1011081f0d16110e501d1113">[email&#160;protected]</a></p>
+      <p>📞 +962 79 000 0000</p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 NovaShop · جميع الحقوق محفوظة</p>
+    <div class="payment-icons">
+      <span class="payment-icon">VISA</span>
+      <span class="payment-icon">Mastercard</span>
+      <span class="payment-icon">Apple Pay</span>
+      <span class="payment-icon">ClickPay</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- ⑨ زر الرجوع للأعلى -->
+<button class="back-to-top" id="backToTop" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- ⑩ زر المفضلة العائم -->
+<button class="wishlist-fab" onclick="toggleWishlistPanel()" title="قائمتي المفضلة">
+  ❤️
+  <span class="wishlist-fab-badge" id="wishFabBadge">0</span>
+</button>
+
+<!-- ⑪ بانر الكوكيز -->
+<div class="cookie-banner" id="cookieBanner">
+  <p>نستخدم ملفات الكوكيز لتحسين تجربتك. <a href="#">اقرأ المزيد</a></p>
+  <button class="cookie-decline" onclick="dismissCookie()">رفض</button>
+  <button class="cookie-accept" onclick="acceptCookie()">قبول ✓</button>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ===== CORE HELPERS =====
+function showToast(msg, type = "info") {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.className = "toast show " + type;
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+function updateCartCount() {
+  const n = (JSON.parse(localStorage.getItem("cart")) || []).length;
+  document.querySelectorAll("#cartCount").forEach(b => b.textContent = n);
+}
+function toggleMenu() { document.getElementById("mobileMenu").classList.toggle("open"); }
+
+// ① Cursor
+document.addEventListener("mousemove", e => {
+  const g = document.getElementById("cursorGlow");
+  if (g) { g.style.left = e.clientX + "px"; g.style.top = e.clientY + "px"; }
+});
+
+// ② Scroll effects
+window.addEventListener("scroll", () => {
+  const y = window.scrollY;
+  document.getElementById("navbar").classList.toggle("scrolled", y > 50);
+  document.getElementById("backToTop").classList.toggle("show", y > 400);
+  // شريط التقدم
+  const total = document.documentElement.scrollHeight - window.innerHeight;
+  document.getElementById("pageProgress").style.width = (y / total * 100) + "%";
+});
+
+// ③ الجلسة + الإشعارات
+document.addEventListener("DOMContentLoaded", () => {
+  updateCartCount();
+  const session = JSON.parse(localStorage.getItem("ns_session") || "null");
+  const userEl = document.getElementById("userNavItem");
+  const adminEl = document.getElementById("adminNavItem");
+  const notifBtn = document.getElementById("notifToggle");
+
+  if (session) {
+    userEl.innerHTML = `<a href="profile.html" style="color:var(--accent);font-weight:700;padding:8px 14px;border-radius:8px;text-decoration:none">👤 ${session.name}</a>`;
+    notifBtn.style.display = "flex";
+    const mobileNotifBtn = document.getElementById("notifToggleMobile");
+    if (mobileNotifBtn) mobileNotifBtn.style.display = "flex";
+    const mobileMenuNotif = document.getElementById("notifMobileMenuBtn");
+    if (mobileMenuNotif) mobileMenuNotif.style.display = "block";
+    if (session.role === "admin") {
+      adminEl.innerHTML = `<a href="admin.html" class="nav-admin">⚙ الإدارة</a>`;
+      document.getElementById("adminMobileItem").innerHTML = `<a href="admin.html">الإدارة</a>`;
+    }
+    // إظهار عداد الإشعارات
+    setTimeout(() => NS_Notifications && NS_Notifications.init && NS_Notifications.init(), 500);
+  } else {
+    userEl.innerHTML = `<a href="login.html" style="color:var(--muted2);padding:8px 14px;border-radius:8px;text-decoration:none;border:1px solid var(--border)">تسجيل الدخول</a>`;
+  }
+
+  // ④ Observer للـ animations
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll(".cat-card,.testi-card,.floating-card,.how-card").forEach(el => obs.observe(el));
+
+  // ⑤ Stats counter
+  document.querySelectorAll(".stat-num").forEach(el => {
+    const target = parseInt(el.dataset.target);
+    let current = 0, step = target / 70;
+    const timer = setInterval(() => {
+      current += step;
+      if (current >= target) { current = target; clearInterval(timer); }
+      el.textContent = Math.floor(current).toLocaleString("ar");
+    }, 22);
+  });
+
+  // ⑥ Floating cards visibility
+  setTimeout(() => document.querySelectorAll(".floating-card").forEach((c,i) => {
+    setTimeout(() => c.classList.add("visible"), i * 250);
+  }), 400);
+
+  // ⑦ إشعار ترحيب
+  if (!session) {
+    setTimeout(() => {
+      if (!localStorage.getItem("ns_guest_banner")) {
+        showToast("👋 سجّل دخولك للحصول على إشعارات العروض!", "info");
+        localStorage.setItem("ns_guest_banner", "1");
+      }
+    }, 4000);
+  }
+
+  // ⑧ كوكيز
+  if (!localStorage.getItem("ns_cookies")) {
+    setTimeout(() => document.getElementById("cookieBanner").classList.add("show"), 2000);
+  }
+
+  renderFlashSale();
+  renderFeatured();
+  startCountdown();
+  updateWishlistBadge();
+});
+
+// ===== COUNTER TIMER =====
+function startCountdown() {
+  function tick() {
+    const end = new Date(); end.setHours(23,59,59,0);
+    const diff = end - Date.now();
+    if (diff < 0) return;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    document.getElementById("cdH").textContent = String(h).padStart(2,"0");
+    document.getElementById("cdM").textContent = String(m).padStart(2,"0");
+    document.getElementById("cdS").textContent = String(s).padStart(2,"0");
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ===== FLASH SALE =====
+function renderFlashSale() {
+  const container = document.getElementById("flashGrid");
+  if (!container) return;
+  const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+  const flashItems = products.slice(0, 4).map(p => ({ ...p, flashDiscount: 25 + Math.floor(Math.random() * 20), sold: Math.floor(Math.random() * 80) + 15 }));
+
+  container.innerHTML = flashItems.map(p => {
+    const fp = (p.price * (1 - p.flashDiscount / 100)).toFixed(2);
+    const save = (p.price - fp).toFixed(2);
+    return `
+    <div class="flash-product" onclick="quickAddToCart(${p.id})">
+      <img src="${p.image}" alt="${p.name}" loading="lazy">
+      <div class="flash-product-info">
+        <div class="flash-product-name">${p.name}</div>
+        <div class="flash-product-prices">
+          <span class="flash-new-price">$${fp}</span>
+          <span class="flash-old-price">$${p.price}</span>
+          <span class="flash-save-badge">-${p.flashDiscount}%</span>
+        </div>
+        <div class="flash-progress">
+          <div class="flash-progress-bar" style="width:${p.sold}%"></div>
+        </div>
+        <div class="flash-remaining">تبقّى ${100 - p.sold}% فقط!</div>
+        <button class="flash-btn" onclick="event.stopPropagation();quickAddToCart(${p.id})">أضف للسلة ⚡</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ===== FEATURED PRODUCTS =====
+function getDefaultProducts() {
+  return [
+    {id:1,name:"Smart Watch Pro",price:29,image:"https://picsum.photos/300/200?random=1",category:"tech",discount:15},
+    {id:2,name:"Wireless Earbuds",price:25,image:"https://picsum.photos/300/200?random=2",category:"audio",discount:0},
+    {id:3,name:"LED Strip Lights",price:15,image:"https://picsum.photos/300/200?random=3",category:"home",discount:20},
+    {id:4,name:"Bluetooth Speaker",price:45,image:"https://picsum.photos/300/200?random=4",category:"audio",discount:10},
+    {id:5,name:"USB-C Hub 7-in-1",price:35,image:"https://picsum.photos/300/200?random=5",category:"tech",discount:0},
+    {id:6,name:"Desk Lamp LED",price:22,image:"https://picsum.photos/300/200?random=6",category:"home",discount:5},
+  ];
+}
+
+function renderFeatured() {
+  const container = document.getElementById("featured-products");
+  if (!container) return;
+  const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+  const wishlist = JSON.parse(localStorage.getItem("ns_wishlist_local") || "[]");
+
+  container.innerHTML = products.slice(0, 6).map((p, i) => {
+    const fp = p.discount ? (p.price * (1 - p.discount / 100)).toFixed(2) : p.price;
+    const ratings = [4.7, 4.8, 4.9, 4.6, 4.8, 4.7];
+    const cats = {tech:"📱 تقنية",audio:"🎧 صوتيات",home:"🏠 منزل",fashion:"👟 أزياء"};
+    const isWished = wishlist.includes(p.id);
+    const badges = ["", "hot", "new", "", "hot", "new"];
+    const badgeLabels = ["", "الأكثر مبيعاً", "جديد", "", "مميز", "وصل حديثاً"];
+    return `
+    <div class="product-card" style="animation-delay:${i*0.07}s">
+      <div class="product-img-wrap">
+        <img src="${p.image}" alt="${p.name}" loading="lazy">
+        <div class="product-overlay">
+          <div class="product-actions">
+            <button class="quick-add" onclick="quickAddToCart(${p.id})">+ أضف للسلة</button>
+            <button class="quick-wishlist ${isWished?'active':''}" onclick="toggleWishlist(${p.id},this)" title="المفضلة">❤️</button>
+          </div>
+        </div>
+        ${p.discount ? `<span class="product-badge ${badges[i]}">${badgeLabels[i] || '-'+p.discount+'%'}</span>` : ""}
+      </div>
+      <div class="product-info">
+        <div class="product-category">${cats[p.category] || p.category}</div>
+        <h3>${p.name}</h3>
+        <div class="product-meta">
+          <div class="product-price-wrap">
+            <span class="product-price">$${fp}</span>
+            ${p.discount ? `<span class="product-price-old">$${p.price}</span>` : ""}
+          </div>
+          <div class="product-rating">⭐ ${ratings[i]} <span>(${80+i*23})</span></div>
+        </div>
+        <button class="add-cart-btn" onclick="quickAddToCart(${p.id})">أضف للسلة 🛒</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ===== CART ACTIONS =====
+function quickAddToCart(id) {
+  const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+  cart.push(id);
+  localStorage.setItem("cart", JSON.stringify(cart));
+  updateCartCount();
+  showToast("✅ تمت الإضافة للسلة!", "success");
+  // إشعار بصري على زر السلة
+  const badge = document.getElementById("cartCount");
+  if (badge) { badge.style.animation = "none"; setTimeout(() => badge.style.animation = "cartBounce 0.4s var(--spring)", 10); }
+  if (window.NS_Notifications && JSON.parse(localStorage.getItem("ns_session") || "null")) {
+    const products = JSON.parse(localStorage.getItem("products")) || getDefaultProducts();
+    const p = products.find(x => x.id == id);
+    if (p) NS_Notifications.add("order", "أضفت منتجاً للسلة 🛒", `${p.name} في انتظارك — أتمّ الشراء قبل نفاد الكمية!`, "cart.html");
+  }
+}
+
+// ===== WISHLIST =====
+function toggleWishlist(id, btn) {
+  const wishlist = JSON.parse(localStorage.getItem("ns_wishlist_local") || "[]");
+  const idx = wishlist.indexOf(id);
+  let added;
+  if (idx === -1) { wishlist.push(id); added = true; }
+  else            { wishlist.splice(idx,1); added = false; }
+  localStorage.setItem("ns_wishlist_local", JSON.stringify(wishlist));
+  btn.classList.toggle("active", added);
+  showToast(added ? "❤️ أضيف للمفضلة!" : "💔 أُزيل من المفضلة", added ? "success" : "info");
+  updateWishlistBadge();
+}
+
+function updateWishlistBadge() {
+  const count = (JSON.parse(localStorage.getItem("ns_wishlist_local") || "[]")).length;
+  const badge = document.getElementById("wishFabBadge");
+  if (badge) { badge.textContent = count; badge.classList.toggle("show", count > 0); }
+}
+
+function toggleWishlistPanel() {
+  showToast("❤️ افتح صفحة المنتجات لعرض مفضلتك", "info");
+}
+
+// ===== COUPON COPY =====
+function copyCode(code) {
+  navigator.clipboard.writeText(code).catch(() => {});
+  showToast(`📋 تم نسخ كود "${code}"`, "success");
+}
+
+// ===== NEWSLETTER =====
+function subscribeNewsletter() {
+  const email = document.getElementById("emailInput").value.trim();
+  if (!email || !email.includes("@")) { showToast("⚠️ أدخل بريدك الإلكتروني", "error"); return; }
+  showToast("🎉 تم الاشتراك! انتظر كود الخصم في بريدك", "success");
+  document.getElementById("emailInput").value = "";
+  if (window.NS_Notifications) NS_Notifications.add("promo", "مرحباً بك في نشرتنا! 🎁", "اشتركت بنجاح. كودك NOVA15 لخصم 15% على أول طلب.", null);
+}
+function subscribeFooter() {
+  const email = document.getElementById("footerEmail").value.trim();
+  if (!email) return;
+  showToast("✅ تم الاشتراك!", "success");
+  document.getElementById("footerEmail").value = "";
+}
+
+// ===== COOKIE =====
+function acceptCookie() {
+  localStorage.setItem("ns_cookies", "accepted");
+  document.getElementById("cookieBanner").classList.remove("show");
+  showToast("✓ تم قبول سياسة الكوكيز", "success");
+}
+function dismissCookie() {
+  localStorage.setItem("ns_cookies", "declined");
+  document.getElementById("cookieBanner").classList.remove("show");
+}
+
+// ===== KEYBOARD SHORTCUTS =====
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    document.getElementById("mobileMenu").classList.remove("open");
+    document.getElementById("cookieBanner")?.classList.remove("show");
+  }
+  if ((e.ctrlKey && e.key === "k") || (e.key === "/" && document.activeElement.tagName !== "INPUT")) {
+    e.preventDefault();
+    window.location.href = "products.html";
+  }
+});
+</script>
+</body>
+</html>
